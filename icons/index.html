@@ -139,10 +139,11 @@ svg.ic{display:block;overflow:visible}
 .t:active,.t.sel{background:var(--fill2)}
 .t:focus-visible{box-shadow:0 0 0 2px var(--accent)}
 .t .ic{position:absolute;inset:0;margin:auto;width:var(--sz);height:var(--sz)}
-/* Scale the vector paths within a fixed viewport to keep their center stable. */
+@property --tile-scale{syntax:"<number>";inherits:false;initial-value:1}
+/* Paint the vector at each scale within a fixed viewport. */
 @media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){
-.tile-glyph{transform-box:view-box;transform-origin:center;transition:transform .3s var(--out)}
-.t:hover .tile-glyph{transform:scale(1.1)}
+.tile-glyph{transform-box:view-box;transform-origin:center;transform:scale(var(--tile-scale,1));transition:--tile-scale .3s var(--out)}
+.t:hover .tile-glyph{--tile-scale:1.1}
 }
 .enter{animation:tin .4s var(--out) both;animation-delay:calc(var(--i) * 6ms)}
 @keyframes tin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
