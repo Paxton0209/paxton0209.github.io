@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Icons</title>
+<link rel="icon" type="image/png" sizes="32x32" href="../DriveScene-Studio/favicon-32.png">
+<link rel="icon" type="image/png" sizes="64x64" href="../DriveScene-Studio/favicon-64.png">
+<link rel="apple-touch-icon" href="../DriveScene-Studio/apple-touch-icon.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -153,6 +156,19 @@ svg.ic{display:block;overflow:visible}
 :root[data-theme=dark] .sun-disc{transform:scale(1.65)}
 :root[data-theme=dark] .sun-rays{transform:rotate(45deg) scale(.7);opacity:0}
 :root[data-theme=dark] .moon-cutout{transform:translate(-9px,9px)}
+@property --theme-reveal-progress{syntax:"<length>";inherits:false;initial-value:0px}
+.theme-changing,.theme-changing *{transition:none!important}
+.theme-changing .theme-icon{view-transition-name:theme-icon}
+.theme-changing .theme-icon *{transition:transform 400ms cubic-bezier(.65,0,.35,1),opacity 300ms ease!important}
+.theme-changing::view-transition{pointer-events:none}
+.theme-changing::view-transition-group(root){animation:none}
+.theme-changing::view-transition-old(root),.theme-changing::view-transition-new(root){animation:none;mix-blend-mode:normal}
+.theme-changing::view-transition-old(root){z-index:1}
+.theme-changing::view-transition-new(root){z-index:2;mask-image:radial-gradient(circle at var(--theme-reveal-x) var(--theme-reveal-y),#000 calc(var(--theme-reveal-progress) - 160px),transparent var(--theme-reveal-progress));animation:theme-reveal 400ms cubic-bezier(.65,0,.35,1) both}
+.theme-changing::view-transition-group(theme-icon){z-index:3;animation-duration:400ms}
+.theme-changing::view-transition-old(theme-icon),.theme-changing::view-transition-new(theme-icon){animation-duration:400ms;mix-blend-mode:normal}
+@keyframes theme-reveal{from{--theme-reveal-progress:0px;opacity:.5}to{--theme-reveal-progress:var(--theme-reveal-radius);opacity:1}}
+
 /* modal */
 .veil{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.18);opacity:0;pointer-events:none;transition:opacity .3s ease}
 :root[data-theme=dark] .veil{background:rgba(0,0,0,.5)}
@@ -339,10 +355,43 @@ function applyTheme(){
   darkSwitch.setAttribute('aria-label',darkSwitch.title);
   darkSwitch.setAttribute('aria-pressed',String(isDark));
 }
-function toggleTheme(){
-  P.darkMode=P.darkMode!==true;
+let requestedDark=P.darkMode;
+let changingTheme=false;
+function setTheme(dark){
+  P.darkMode=dark;
   applyTheme();
   save();
+}
+async function toggleTheme(){
+  requestedDark=!requestedDark;
+  if(changingTheme)return;
+  const root=document.documentElement;
+  if(!document.startViewTransition||matchMedia('(prefers-reduced-motion: reduce)').matches){
+    setTheme(requestedDark);
+    return;
+  }
+  changingTheme=true;
+  try{
+    while(P.darkMode!==requestedDark){
+      const dark=requestedDark;
+      const {left,top,width,height}=darkSwitch.getBoundingClientRect();
+      const x=left+width/2,y=top+height/2;
+      const radius=Math.hypot(Math.max(x,innerWidth-x),Math.max(y,innerHeight-y))+180;
+      root.style.setProperty('--theme-reveal-x',x+'px');
+      root.style.setProperty('--theme-reveal-y',y+'px');
+      root.style.setProperty('--theme-reveal-radius',radius+'px');
+      root.classList.add('theme-changing');
+      try{
+        await document.startViewTransition(()=>setTheme(dark)).finished;
+      }catch{
+        setTheme(dark);
+      }finally{
+        root.classList.remove('theme-changing');
+      }
+    }
+  }finally{
+    changingTheme=false;
+  }
 }
 applyTheme();
 darkSwitch.onclick=toggleTheme;
