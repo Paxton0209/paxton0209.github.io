@@ -17,7 +17,7 @@
   --display:-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,sans-serif;
   --mono:ui-monospace,"SF Mono",Menlo,monospace;
   --out:cubic-bezier(.22,1,.36,1);
-  --cell:80px; --sz:32px; --insp:380px;
+  --cell:80px; --sz:40px; --insp:380px;
   --t-title:600 24px/1.2 var(--display); --t-body:400 15px/20px var(--font); --t-cap:400 13px/18px var(--font);
   color-scheme:light;
 }
@@ -294,7 +294,7 @@ body.insp .ib{opacity:1;transform:none;transition-delay:.06s}
   .grp{grid-template-columns:1fr}.gh{padding:0 0 6px}.gh span{display:inline;margin-left:8px}
   .insp{position:fixed;inset:auto 0 0 0;z-index:50;transform:translateY(100%);transition:transform .3s var(--out)}
   body.insp .insp{transform:none}.ip{width:100%;height:auto;max-height:88vh;padding:0}.ipin{border-radius:20px 20px 0 0}
-  :root{--cell:68px;--sz:28px}
+  :root{--cell:68px}
 }
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:1ms!important;transition-duration:1ms!important}}
 </style>
@@ -318,7 +318,7 @@ body.insp .ib{opacity:1;transform:none;transition-delay:.06s}
 </div>
 
 <div class="pop" id="pop" role="dialog" aria-label="View options">
-  <div class="prow"><span>Size</span><input type="range" id="szR" min="24" max="44" step="4" aria-label="Icon size"><output id="szO">32</output></div>
+  <div class="prow"><span>Size</span><input type="range" id="szR" min="24" max="44" step="4" value="40" aria-label="Icon size"><output id="szO">40</output></div>
   <div class="prow"><span>Guides</span><button class="sw" id="klBtn" aria-label="Guides"></button></div>
   <div class="prow"><span>Dark mode</span><button class="sw" id="darkSw" aria-label="Dark mode" aria-pressed="false"></button></div>
 </div>
@@ -361,10 +361,14 @@ document.querySelectorAll('[data-ic]').forEach(e=>setIc(e,e.dataset.ic));
 
 
 /* prefs */
-let P={darkMode:false,size:32,kl:0,px:24,cat:'general'};
+const DEFAULT_ICON_SIZE=40;
+let P={darkMode:false,gridSize:DEFAULT_ICON_SIZE,kl:0,px:24,cat:'general'};
 try{Object.assign(P,JSON.parse(localStorage.getItem('dsi4')||'{}'))}catch(e){}
 // The old theme value could have been saved automatically from the system preference.
 delete P.theme;
+// The old 32px default was saved even when nobody used the slider.
+if(P.gridSize===DEFAULT_ICON_SIZE&&[24,28,36,44].includes(P.size))P.gridSize=P.size;
+delete P.size;
 const save=()=>{try{localStorage.setItem('dsi4',JSON.stringify(P))}catch(e){}};
 function seg(el,get,set){const place=i=>{const b=el.querySelector('button.on');if(!b)return;const ind=el.querySelector('.ind');if(i)ind.style.transition='none';ind.style.transform=`translateX(${b.offsetLeft-2}px)`;if(i){ind.offsetWidth;ind.style.transition=''}};
   const sync=i=>{el.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v==String(get())));place(i)};
@@ -385,9 +389,8 @@ applyTheme();
 darkSwitch.onclick=toggleTheme;
 const pop=$('#pop');$('#viewBtn').onclick=e=>{e.stopPropagation();const on=!pop.classList.contains('on');pop.classList.toggle('on',on);$('#viewBtn').classList.toggle('on',on);};
 document.addEventListener('click',e=>{if(!e.target.closest('#pop')){pop.classList.remove('on');$('#viewBtn').classList.remove('on')}});
-const szR=$('#szR');function setSize(v,s){P.size=v;szR.value=v;szR.style.setProperty('--p',((v-24)/20*100)+'%');$('#szO').textContent=v;document.documentElement.style.setProperty('--sz',v+'px');if(s)save();}
-setSize(P.size||32);szR.addEventListener('input',()=>setSize(+szR.value,1));
-document.documentElement.style.setProperty('--sz',P.size+'px');
+const szR=$('#szR');function setSize(v,s){P.gridSize=v;szR.value=v;szR.style.setProperty('--p',((v-24)/20*100)+'%');$('#szO').textContent=v;document.documentElement.style.setProperty('--sz',v+'px');if(s)save();}
+setSize(P.gridSize);szR.addEventListener('input',()=>setSize(+szR.value,1));
 function setKl(v){P.kl=v;document.body.classList.toggle('kl',!!v);$('#klBtn').classList.toggle('on',!!v);save()}
 setKl(P.kl);$('#klBtn').onclick=()=>setKl(P.kl?0:1);
 
