@@ -138,7 +138,12 @@ svg.ic{display:block;overflow:visible}
 .t:hover .nm{opacity:1;transform:none;transition-delay:.45s}
 .t:active,.t.sel{background:var(--fill2)}
 .t:focus-visible{box-shadow:0 0 0 2px var(--accent)}
-.t .ic{width:var(--sz);height:var(--sz)}
+.t .ic{position:absolute;inset:0;margin:auto;width:var(--sz);height:var(--sz)}
+/* Resize the SVG viewport inside the fixed tile so each frame is drawn at its current size. */
+@media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){
+.t .ic{transition:width .3s var(--out),height .3s var(--out)}
+.t:hover .ic{width:calc(var(--sz) * 1.1);height:calc(var(--sz) * 1.1)}
+}
 .enter{animation:tin .4s var(--out) both;animation-delay:calc(var(--i) * 6ms)}
 @keyframes tin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .none{padding:120px 0;text-align:center;color:var(--t3);font:var(--t-body)}
