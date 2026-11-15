@@ -318,7 +318,7 @@ body.insp .ib{opacity:1;transform:none;transition-delay:.06s}
 <div class="pop" id="pop" role="dialog" aria-label="View options">
   <div class="prow"><span>Size</span><input type="range" id="szR" min="24" max="44" step="4" aria-label="Icon size"><output id="szO">32</output></div>
   <div class="prow"><span>Guides</span><button class="sw" id="klBtn" aria-label="Guides"></button></div>
-  <div class="prow"><span>Dark mode</span><button class="sw" id="darkSw" aria-label="Dark mode"></button></div>
+  <div class="prow"><span>Dark mode</span><button class="sw" id="darkSw" aria-label="Dark mode" aria-pressed="false"></button></div>
 </div>
 
 <div class="veil" id="veil"></div>
@@ -352,15 +352,28 @@ document.querySelectorAll('[data-ic]').forEach(e=>setIc(e,e.dataset.ic));
 
 
 /* prefs */
-let P={theme:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light',size:32,kl:0,px:24,cat:'general'};
+let P={darkMode:false,size:32,kl:0,px:24,cat:'general'};
 try{Object.assign(P,JSON.parse(localStorage.getItem('dsi4')||'{}'))}catch(e){}
+// The old theme value could have been saved automatically from the system preference.
+delete P.theme;
 const save=()=>{try{localStorage.setItem('dsi4',JSON.stringify(P))}catch(e){}};
 function seg(el,get,set){const place=i=>{const b=el.querySelector('button.on');if(!b)return;const ind=el.querySelector('.ind');if(i)ind.style.transition='none';ind.style.transform=`translateX(${b.offsetLeft-2}px)`;if(i){ind.offsetWidth;ind.style.transition=''}};
   const sync=i=>{el.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v==String(get())));place(i)};
   el.addEventListener('click',e=>{const b=e.target.closest('button');if(b){set(b.dataset.v);sync()}});el._sync=sync;sync(true);}
-function applyTheme(){document.documentElement.dataset.theme=P.theme;const s=document.getElementById('darkSw');if(s)s.classList.toggle('on',P.theme==='dark');}
+const darkSwitch=$('#darkSw');
+function applyTheme(){
+  const isDark=P.darkMode===true;
+  document.documentElement.dataset.theme=isDark?'dark':'light';
+  darkSwitch.classList.toggle('on',isDark);
+  darkSwitch.setAttribute('aria-pressed',String(isDark));
+}
+function toggleTheme(){
+  P.darkMode=P.darkMode!==true;
+  applyTheme();
+  save();
+}
 applyTheme();
-$('#darkSw').onclick=()=>{P.theme=P.theme==='dark'?'light':'dark';applyTheme();save()};
+darkSwitch.onclick=toggleTheme;
 const pop=$('#pop');$('#viewBtn').onclick=e=>{e.stopPropagation();const on=!pop.classList.contains('on');pop.classList.toggle('on',on);$('#viewBtn').classList.toggle('on',on);};
 document.addEventListener('click',e=>{if(!e.target.closest('#pop')){pop.classList.remove('on');$('#viewBtn').classList.remove('on')}});
 const szR=$('#szR');function setSize(v,s){P.size=v;szR.value=v;szR.style.setProperty('--p',((v-24)/20*100)+'%');$('#szO').textContent=v;document.documentElement.style.setProperty('--sz',v+'px');if(s)save();}
@@ -511,7 +524,7 @@ async function copy(text,btn){let ok=false;try{await navigator.clipboard.writeTe
   btn.querySelector('.b').textContent=ok?'Copied':'Blocked';btn.classList.add('done');clearTimeout(btn._t);btn._t=setTimeout(()=>btn.classList.remove('done'),1400);}
 $('#cSvg').onclick=e=>copy(svgOut(by[sel],24),e.currentTarget);
 addEventListener('keydown',e=>{const typing=document.activeElement===q;
-  if(!typing&&(e.key==='d'||e.key==='D')){P.theme=P.theme==='dark'?'light':'dark';applyTheme();save();}
+  if(!typing&&(e.key==='d'||e.key==='D'))toggleTheme();
   if((e.key==='/'&&!typing)||((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k')){e.preventDefault();q.focus();q.select();return;}
   if(e.key==='Escape'){if(typing){if(q.value){q.value='';$('#find').classList.remove('has');search()}else q.blur()}else closeInsp();return;}
   if(typing)return;
