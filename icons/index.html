@@ -272,11 +272,13 @@ body.insp .ib{opacity:1;transform:none;transition-delay:.06s}
 .bt.pri{background:var(--ink);color:var(--panel)}
 .bt.pri:hover{opacity:.88}
 .bt svg{width:20px;height:20px}
-.bt .lb{display:inline-grid;overflow:hidden}
-.bt .lb span{grid-area:1/1;transition:transform .35s var(--out),opacity .2s}
-.bt .lb .b{transform:translateY(110%);opacity:0}
-.bt.done .lb .a{transform:translateY(-110%);opacity:0}
-.bt.done .lb .b{transform:none;opacity:1}
+#cSvg{display:grid;place-items:center}
+.svg-copy-idle,.svg-copy-result{grid-area:1/1;white-space:nowrap}
+.svg-copy-result{display:inline-flex;align-items:center;gap:6px;opacity:0}
+#cSvg .svg-copy-result svg{width:14px;height:14px;flex:none}
+.svg-copy-result path{stroke-dasharray:1;stroke-dashoffset:0}
+#cSvg[data-copy-state="failure"] .svg-copy-result svg{display:none}
+.svg-copy-status{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .bt.wide{grid-column:span 2;background:none;color:var(--t2);font-weight:400;height:38px}
 .bt.wide:hover{background:var(--fill);color:var(--ink)}
 .fl{position:fixed;z-index:60;pointer-events:none;color:var(--icon);transform-origin:0 0}
@@ -332,7 +334,14 @@ body.insp .ib{opacity:1;transform:none;transition-delay:.06s}
     </div>
     <div class="ihead"><div class="iname" id="iname"></div><div class="ipath" id="ipath"></div></div>
     <div class="acts2">
-      <button class="bt pri" id="cSvg"><span class="lb"><span class="a">Copy SVG</span><span class="b">Copied</span></span></button>
+      <button class="bt pri" id="cSvg" type="button" aria-label="Copy SVG">
+        <span class="svg-copy-idle" aria-hidden="true">Copy SVG</span>
+        <span class="svg-copy-result" aria-hidden="true">
+          <svg viewBox="0 0 16 16" fill="none"><path pathLength="1" d="m3 8 3 3 7-7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Copied</span>
+        </span>
+      </button>
+      <span class="svg-copy-status" id="svg-copy-status" role="status" aria-atomic="true"></span>
     </div>
   </div>
 </div>
@@ -468,7 +477,7 @@ function fill(o){
   $('#ipath').innerHTML=`<span>${o.n}</span>`+RULE(o).map(r=>`<span class="r">${r}</span>`).join('');
   if($('#sizes'))$('#sizes').innerHTML='<span class="szind"></span>'+SIZES.map(z=>`<button data-v="${z}" class="${z===P.px?'on':''}">${svg(o,`width="${z}" height="${z}"`)}<small>${z}</small></button>`).join('');
   requestAnimationFrame(()=>placeSz(false));
-  document.querySelectorAll('.bt,.lnk button').forEach(b=>b.classList.remove('done'));
+  resetSvgCopy();
 }
 const sheet=$('#sheet');
 function flyIcon(o,from,to,ms,back){const f=document.createElement('div');f.className='fl';f.innerHTML=svg(o);document.body.appendChild(f);
@@ -498,6 +507,7 @@ function select(n,fromTile){
   }));
 }
 function closeInsp(){if(!document.body.classList.contains('modal'))return;
+  resetSvgCopy();
   const t=AP().querySelector(`.t[data-n="${sel}"]`);const o=by[sel];
   const done=()=>{document.activeElement&&document.activeElement.blur();document.body.classList.remove('modal');sheet.setAttribute('aria-hidden','true');document.querySelectorAll('.t svg').forEach(s=>s.style.opacity='');document.querySelectorAll('.t.sel').forEach(x=>x.classList.remove('sel'));sel=null;};
   if(!t){done();return;}
@@ -520,9 +530,134 @@ let szFrom=null;
 function placeSz(anim){const ind=$('#sizes .szind');const r=szRect();if(!ind||!r)return;ind.style.top=r.y+'px';ind.style.height=r.h+'px';
   const to={s:r.x,z:r.w};if(anim&&szFrom)slide(ind,'x',szFrom,to,340);else{ind.style.left=to.s+'px';ind.style.width=to.z+'px';}szFrom=to;}
 if($('#sizes'))$('#sizes').onclick=e=>{const b=e.target.closest('button');if(!b)return;P.px=+b.dataset.v;save();$('#sizes').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));placeSz(true)};
-async function copy(text,btn){let ok=false;try{await navigator.clipboard.writeText(text);ok=true}catch(e){try{const a=document.createElement('textarea');a.value=text;a.style.cssText='position:fixed;opacity:0';document.body.appendChild(a);a.select();ok=document.execCommand('copy');a.remove()}catch(_){}}
-  btn.querySelector('.b').textContent=ok?'Copied':'Blocked';btn.classList.add('done');clearTimeout(btn._t);btn._t=setTimeout(()=>btn.classList.remove('done'),1400);}
-$('#cSvg').onclick=e=>copy(svgOut(by[sel],24),e.currentTarget);
+// Timing, checkmark and synthesized tap come from the portfolio’s contact copy feedback.
+const COPY_TIMING={out:100,in:120,labelDelay:40,tickDelay:80,tick:180,hold:1000,returnOut:100,returnIn:180};
+const copyButton=$('#cSvg');
+const copyIdle=copyButton.querySelector('.svg-copy-idle');
+const copyResult=copyButton.querySelector('.svg-copy-result');
+const copyTick=copyResult.querySelector('path');
+const copyLabel=copyResult.querySelector('span');
+const copyStatus=$('#svg-copy-status');
+const copyReducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
+let copyAudio,copyNoiseBuffer,copyRequest,copyTickAnimation;
+let copyTimers=[],copyAnimations=[];
+
+function prepareCopyAudio(){
+  try{
+    const Audio=window.AudioContext||window.webkitAudioContext;
+    if(!Audio)return;
+    copyAudio??=new Audio();
+    if(copyAudio.state==='suspended')copyAudio.resume().catch(()=>{});
+  }catch(_){}
+}
+function playCopyTap(){
+  try{
+    const audio=copyAudio;
+    if(!audio||audio.state!=='running')return;
+    if(!copyNoiseBuffer){
+      copyNoiseBuffer=audio.createBuffer(1,Math.ceil(audio.sampleRate*.03),audio.sampleRate);
+      const samples=copyNoiseBuffer.getChannelData(0);
+      for(let i=0;i<samples.length;i++)samples[i]=Math.random()*2-1;
+    }
+    const t=audio.currentTime;
+    const noise=audio.createBufferSource(),filter=audio.createBiquadFilter(),noiseGain=audio.createGain();
+    noise.buffer=copyNoiseBuffer;filter.type='bandpass';filter.frequency.value=3200;filter.Q.value=2.5;
+    noiseGain.gain.setValueAtTime(0,t);noiseGain.gain.linearRampToValueAtTime(.22,t+.001);noiseGain.gain.exponentialRampToValueAtTime(.0001,t+.03);
+    noise.connect(filter).connect(noiseGain).connect(audio.destination);noise.start(t);noise.stop(t+.03);
+    const tone=audio.createOscillator(),toneGain=audio.createGain();
+    tone.type='sine';tone.frequency.setValueAtTime(180,t);tone.frequency.exponentialRampToValueAtTime(90,t+.03);
+    toneGain.gain.setValueAtTime(0,t);toneGain.gain.linearRampToValueAtTime(.08,t+.001);toneGain.gain.exponentialRampToValueAtTime(.0001,t+.03);
+    tone.connect(toneGain).connect(audio.destination);tone.start(t);tone.stop(t+.03);
+    noise.onended=()=>{noise.disconnect();filter.disconnect();noiseGain.disconnect()};
+    tone.onended=()=>{tone.disconnect();toneGain.disconnect()};
+  }catch(_){}
+}
+function clearCopyAnimations(){
+  copyAnimations.forEach(animation=>animation.cancel());
+  copyAnimations=[];
+  copyTickAnimation=null;
+}
+function clearCopyFeedback(){
+  copyTimers.forEach(clearTimeout);
+  copyTimers=[];
+  clearCopyAnimations();
+  delete copyButton.dataset.copyState;
+  copyStatus.textContent='';
+}
+function resetSvgCopy(){
+  copyRequest=null;
+  clearCopyFeedback();
+}
+function fadeCopyLabel(element,from,to,duration,delay=0,easing='ease'){
+  const animation=element.animate([{opacity:from},{opacity:to}],{duration,delay,fill:'both',easing});
+  copyAnimations.push(animation);
+  return animation;
+}
+function showCopyFeedback(copied){
+  const replay=Boolean(copyButton.dataset.copyState);
+  const fromIdle=replay?Number(getComputedStyle(copyIdle).opacity):1;
+  const fromResult=replay?Number(getComputedStyle(copyResult).opacity):0;
+  clearCopyFeedback();
+  copyButton.dataset.copyState=copied?'success':'failure';
+  copyLabel.textContent=copied?'Copied':'Blocked';
+  const timing=COPY_TIMING;
+  fadeCopyLabel(copyIdle,fromIdle,0,timing.out);
+  fadeCopyLabel(copyResult,fromResult,1,timing.in,timing.labelDelay);
+  if(copied){
+    if(!copyReducedMotion.matches){
+      copyTickAnimation=copyTick.animate([{strokeDashoffset:1},{strokeDashoffset:0}],{
+        duration:timing.tick,delay:timing.tickDelay,fill:'both',easing:'cubic-bezier(.65,0,.35,1)'
+      });
+      copyAnimations.push(copyTickAnimation);
+    }
+    copyTimers.push(setTimeout(playCopyTap,timing.tickDelay));
+  }
+  copyTimers.push(setTimeout(()=>{
+    copyStatus.textContent=copied?'SVG copied':'Couldn’t copy SVG';
+  },30));
+  copyTimers.push(setTimeout(()=>{
+    clearCopyAnimations();
+    const easeOut='cubic-bezier(.23,1,.32,1)';
+    fadeCopyLabel(copyResult,1,0,timing.returnOut,0,easeOut);
+    const incoming=fadeCopyLabel(copyIdle,0,1,timing.returnIn,0,easeOut);
+    incoming.onfinish=()=>{
+      if(copyAnimations.includes(incoming))clearCopyFeedback();
+    };
+  },timing.tickDelay+timing.tick+timing.hold));
+}
+async function copySvg(){
+  const icon=by[sel];
+  if(copyRequest||!icon)return;
+  const request=Symbol();
+  copyRequest=request;
+  prepareCopyAudio();
+  const text=svgOut(icon,24);
+  let copied=false;
+  try{
+    await navigator.clipboard.writeText(text);
+    copied=true;
+  }catch(_){
+    if(copyRequest!==request)return;
+    const focused=document.activeElement;
+    const buffer=document.createElement('textarea');
+    buffer.value=text;
+    buffer.readOnly=true;
+    buffer.tabIndex=-1;
+    buffer.style.cssText='position:fixed;left:-9999px;top:0;opacity:0';
+    document.body.append(buffer);
+    buffer.select();
+    try{copied=document.execCommand('copy')}catch(_){}
+    buffer.remove();
+    if(focused?.isConnected)focused.focus({preventScroll:true});
+  }
+  if(copyRequest!==request)return;
+  copyRequest=null;
+  showCopyFeedback(copied);
+}
+copyButton.onclick=copySvg;
+copyReducedMotion.addEventListener('change',()=>{
+  if(copyReducedMotion.matches)copyTickAnimation?.cancel();
+});
 addEventListener('keydown',e=>{const typing=document.activeElement===q;
   if(!typing&&(e.key==='d'||e.key==='D'))toggleTheme();
   if((e.key==='/'&&!typing)||((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k')){e.preventDefault();q.focus();q.select();return;}
