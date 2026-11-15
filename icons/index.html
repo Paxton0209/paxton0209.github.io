@@ -139,10 +139,10 @@ svg.ic{display:block;overflow:visible}
 .t:active,.t.sel{background:var(--fill2)}
 .t:focus-visible{box-shadow:0 0 0 2px var(--accent)}
 .t .ic{position:absolute;inset:0;margin:auto;width:var(--sz);height:var(--sz)}
-/* Resize the SVG viewport inside the fixed tile so each frame is drawn at its current size. */
+/* Scale the vector paths within a fixed viewport to keep their center stable. */
 @media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){
-.t .ic{transition:width .3s var(--out),height .3s var(--out)}
-.t:hover .ic{width:calc(var(--sz) * 1.1);height:calc(var(--sz) * 1.1)}
+.tile-glyph{transform-box:view-box;transform-origin:center;transition:transform .3s var(--out)}
+.t:hover .tile-glyph{transform:scale(1.1)}
 }
 .enter{animation:tin .4s var(--out) both;animation-delay:calc(var(--i) * 6ms)}
 @keyframes tin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -775,7 +775,10 @@ function inlineSvgBody(o){
   return o.s.replace(/\bid="([\w-]+)"/g,(_,id)=>`id="${id}${suffix}"`)
     .replace(/url\(#([\w-]+)\)/g,(_,id)=>`url(#${id}${suffix})`);
 }
-const svg=(o,ex='')=>`<svg class="ic" ${A} ${ex} aria-hidden="true">${inlineSvgBody(o)}</svg>`;
+function svg(o,ex='',tile=false){
+  const body=inlineSvgBody(o);
+  return `<svg class="ic" ${A} ${ex} aria-hidden="true">${tile?`<g class="tile-glyph">${body}</g>`:body}</svg>`;
+}
 function setIc(el,n){el.innerHTML=inlineSvgBody(by[n]);el.setAttribute('fill','none');}
 document.querySelectorAll('[data-ic]').forEach(e=>setIc(e,e.dataset.ic));
 
@@ -877,7 +880,7 @@ $('#nav').addEventListener('click',e=>{const it=e.target.closest('.it');if(it){i
 let list=[];
 function rows(L,showCat){const gs=[...new Set(L.map(o=>o.c+'|'+o.g))];let i=0;
   return gs.map(key=>{const [c,g]=key.split('|');const G=L.filter(o=>o.c===c&&o.g===g);
-    return `<div class="grp" data-g="${g}"><div class="gh"><b>${g}</b>${showCat?`<small>${CT[c].t}</small>`:''}</div><div class="tiles">${G.map(o=>`<button class="t enter${sel===o.n?' sel':''}" style="--i:${Math.min(i++,48)}" data-n="${o.n}" aria-label="${o.title}">${svg(o)}<span class="nm">${o.title}</span></button>`).join('')}</div></div>`}).join('');}
+    return `<div class="grp" data-g="${g}"><div class="gh"><b>${g}</b>${showCat?`<small>${CT[c].t}</small>`:''}</div><div class="tiles">${G.map(o=>`<button class="t enter${sel===o.n?' sel':''}" style="--i:${Math.min(i++,48)}" data-n="${o.n}" aria-label="${o.title}">${svg(o,'',true)}<span class="nm">${o.title}</span></button>`).join('')}</div></div>`}).join('');}
 const PANES={};const V=$('#view');
 function pane(k){if(!PANES[k]){const d=document.createElement('div');d.className='pane';d.dataset.k=k;V.appendChild(d);PANES[k]=d;}return PANES[k];}
 function AP(){return V.querySelector('.pane.on')||V;}
@@ -929,6 +932,15 @@ function fill(o){
   resetSvgCopy();
 }
 const sheet=$('#sheet');
+function tileIconRect(tile){
+  const icon=tile.querySelector('.ic');
+  const rect=icon.getBoundingClientRect();
+  const transform=getComputedStyle(icon.querySelector('.tile-glyph')).transform;
+  if(transform==='none')return rect;
+  const scale=new DOMMatrixReadOnly(transform).a;
+  const width=rect.width*scale,height=rect.height*scale;
+  return {left:rect.left+(rect.width-width)/2,top:rect.top+(rect.height-height)/2,width,height};
+}
 function flyIcon(o,from,to,ms,back){const f=document.createElement('div');f.className='fl';f.innerHTML=svg(o);document.body.appendChild(f);
   const A=back?to:from,B=back?from:to;Object.assign(f.style,{left:to.left+'px',top:to.top+'px',width:to.width+'px',height:to.height+'px'});
   const k=r=>`translate(${r.left-to.left}px,${r.top-to.top}px) scale(${r.width/to.width})`;
@@ -939,7 +951,7 @@ function select(n,fromTile){
   fill(o);
   if(open){[$('#big'),$('.sr')].forEach(e=>{e.classList.remove('sfade');void e.offsetWidth;e.classList.add('sfade')});if(t)t.scrollIntoView({block:'nearest'});return;}
   if(t)t.blur();
-  const ts=t?.querySelector('.ic').getBoundingClientRect();
+  const ts=t?tileIconRect(t):null;
   sheet.style.opacity='0';document.body.classList.add('modal');sheet.setAttribute('aria-hidden','false');
   const big=$('#big');big.style.opacity='0';
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
@@ -961,7 +973,7 @@ function closeInsp(){if(!document.body.classList.contains('modal'))return;
   t.scrollIntoView({block:'nearest'});
   const sr=sheet.getBoundingClientRect(),tr=t.getBoundingClientRect(),sx=tr.width/sr.width,sy=tr.height/sr.height;
   const big=$('#big');const br=big.getBoundingClientRect();big.style.opacity='0';
-  flyIcon(o,t.querySelector('.ic').getBoundingClientRect(),br,260,true);
+  flyIcon(o,tileIconRect(t),br,260,true);
   $('#veil').style.opacity='0';
   sheet.animate([{transform:'translate(-50%,-50%)',opacity:1},{transform:`translate(${tr.left-sr.left-sr.width/2}px,${tr.top-sr.top-sr.height/2}px) scale(${sx},${sy})`,opacity:0}],{duration:260,easing:'cubic-bezier(.4,0,.2,1)'}).onfinish=()=>{done();big.style.opacity='';$('#veil').style.opacity='';};
 }
