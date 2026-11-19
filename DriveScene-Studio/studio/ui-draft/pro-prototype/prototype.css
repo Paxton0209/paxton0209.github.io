@@ -1,0 +1,414 @@
+/* Prototype additions. Values come from design-system tokens; geometry follows the live workbench. */
+.pro-scene-preview,.parked-view{position:absolute;inset:0;width:100%;height:100%;border:0}
+.parked-view{z-index:1}
+:root[data-parked-entry] #inspector,.artboard-clip[data-parked-entry] .pro-scene-preview{visibility:hidden}
+.artboard-clip[data-parked-entry]{background-image:var(--parked-entry-frame,none);background-position:center;background-size:cover}
+#startup-surface,#menu-cover,#canvas-transport,#indicator-mute{display:none!important}
+
+/* Toolbar account area */
+.toolbar{gap:var(--ds-space-4)}
+.account-actions{display:flex;align-items:center;gap:var(--ds-space-4);margin-left:auto}
+.tb-btn{height:var(--ds-size-control);padding:0 var(--ds-space-5);border:0;border-radius:var(--ds-radius-control);font:var(--ds-text-ui-strong);color:var(--ds-color-text-1);background:transparent;display:inline-flex;align-items:center;white-space:nowrap}
+.tb-btn.raised-btn{background:var(--ds-color-raised);box-shadow:0 0 0 1px var(--ds-color-line-control),var(--ds-shadow-lift)}
+:root[data-theme=dark] .tb-btn.raised-btn{background:var(--ds-color-selected);box-shadow:none}
+.avatar{width:var(--ds-size-control);height:var(--ds-size-control);border:0;padding:0;border-radius:50%;background:transparent;display:grid;place-items:center}
+.avatar span{width:24px;height:24px;border-radius:50%;background:var(--ds-color-mass);color:var(--ds-color-text-1);font:var(--ds-text-ui-title);display:grid;place-items:center} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+.pro-tag{display:inline-flex;align-items:center;justify-content:center;height:16px;padding:0 5px;border-radius:var(--ds-radius-thumb);background:linear-gradient(160deg,#FBEDC4 0%,#F2D58F 55%,#E9C273 100%);color:#7A5000;font:600 10px/16px var(--ds-font-family);letter-spacing:.06em;text-transform:uppercase;box-shadow:inset 0 0 0 .5px rgba(150,100,10,.35),inset 0 1px 0 rgba(255,255,255,.65),0 1px 1px rgba(150,100,10,.10);flex:0 0 auto} /* ds-allow: author request 2026-11-08, badge text 10px uppercase */
+:root[data-theme=dark] .pro-tag{color:#F2CF7E;background:linear-gradient(160deg,rgba(248,226,164,.24),rgba(217,160,64,.14));box-shadow:inset 0 0 0 .5px rgba(242,207,126,.35),inset 0 1px 0 rgba(255,255,255,.08)}
+
+/* Menus reuse the live export popover (.format-options); only the extras are added here */
+.format-options button .pro-tag{position:absolute;right:8px;top:50%;transform:translateY(-50%)} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+.format-options button.has-tag{padding-right:48px!important} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+.format-options button[aria-disabled=true]{color:var(--ds-color-text-2)}
+.format-options .menu-head{padding:8px 8px 10px;margin-bottom:4px;display:flex;flex-direction:column;gap:2px;box-shadow:inset 0 -1px 0 var(--ds-color-line)} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+.format-options .menu-head b{font:var(--ds-text-ui-strong);color:var(--ds-color-text-1)}
+.format-options .menu-head span{font:var(--ds-text-ui-caption);color:var(--ds-color-text-2)}
+.format-options{animation:proto-menu var(--ds-motion-menu) var(--ds-motion-ease);transform-origin:top}
+.format-options.up{transform-origin:bottom}
+@keyframes proto-menu{from{opacity:0;transform:scale(.98)}to{opacity:1;transform:none}}
+
+/* Keep the existing switch track and give its thumb a persistent element to morph. */
+#inspector .layer-row:has(>.layer-thumb)::before{display:none}
+#inspector .layer-row>.layer-thumb{
+  position:absolute;top:50%;right:calc(var(--ds-space-5) + var(--ds-size-thumb-inset));
+  width:var(--ds-space-5);height:var(--ds-space-5);border-radius:var(--ds-radius-pill);
+  translate:0 -50%;transform:translateX(0);z-index:1;pointer-events:none;background:var(--ds-color-on-accent)
+}
+#inspector .layer-row:is([aria-pressed=true],[aria-checked=true])>.layer-thumb{transform:translateX(var(--ds-space-5))}
+#inspector .layer-row:is([aria-pressed=false],[aria-checked=false]):not(:disabled)>.layer-thumb{box-shadow:var(--sh-raised)}
+@media (forced-colors:active){
+  #inspector .layer-row:is([aria-pressed=true],[aria-checked=true])>.layer-thumb{background:HighlightText}
+}
+
+/* Interaction and guide sections */
+#interaction-settings[hidden],#guide-settings[hidden],#shared-settings[hidden],#inspector-scroll>section:has(#layers)[hidden],#layers .layer-row[hidden]{display:none!important}
+html:root #inspector-scroll>:is(#interaction-settings,#shared-settings,section:has(#layers)):not([hidden]){margin-top:var(--ds-space-8)}
+@media(max-width:639px){ /* ds-allow: matches the existing mobile inspector breakpoint */
+  html:root #inspector-scroll>:is(#interaction-settings,#shared-settings,section:has(#layers),#export-section):not([hidden]){margin-top:var(--ds-space-9)}
+}
+#inspector #interaction-settings > h2{display:flex;align-items:center;gap:var(--ds-space-3)}
+#interaction-settings .event-list{display:flex;flex-direction:column;gap:var(--ds-space-2)}
+#interaction-settings .event-disclosure{display:grid;grid-template-rows:1fr;opacity:1}
+#interaction-settings[data-motion=live] .event-disclosure{transition:grid-template-rows var(--ds-motion-base) var(--ds-motion-ease-out),opacity var(--ds-motion-fast) var(--ds-motion-ease)}
+#interaction-settings .event-disclosure[aria-hidden=true]{grid-template-rows:0fr;opacity:0}
+#interaction-settings .event-disclosure-clip{min-height:0;overflow:clip}
+/* Pass on belongs to Roadworks by proximity: 4px to its switch, 12px to the next event. No indent, so every label and control keeps one column. */
+#interaction-settings .roadworks-controls{display:flex;flex-direction:column}
+#interaction-settings .event-disclosure:not([aria-hidden=true]){margin-top:var(--ds-space-2)}
+#interaction-settings[data-motion=live] .event-disclosure{transition-property:grid-template-rows,opacity,margin}
+#interaction-settings .roadworks-controls:has(.event-disclosure:not([aria-hidden=true])){margin-bottom:var(--ds-space-4)}
+#interaction-settings .event-list .layer-row[aria-checked=true]{color:var(--ds-color-text-1)}
+#interaction-settings .event-list .layer-row.locked>.layer-thumb,#interaction-settings .event-list .layer-row.locked::after{opacity:var(--ds-motion-disabled-opacity)}
+#interaction-settings .event-list .layer-row.locked{cursor:pointer}
+#interaction-settings .event-list .layer-row:is(:disabled,[aria-disabled=true]){opacity:var(--ds-motion-disabled-opacity);cursor:default}
+#inspector .event-controlled{opacity:var(--ds-motion-disabled-opacity);cursor:default}
+#inspector .event-controlled .segment[aria-disabled=true]{opacity:1}
+#inspector .event-controlled button:disabled{pointer-events:none}
+#inspector-scroll.has-more{-webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - var(--ds-space-8)),transparent);mask-image:linear-gradient(to bottom,#000 calc(100% - var(--ds-space-8)),transparent)} /* ds-allow: Mask stops only supply alpha, not theme colors. */
+.unused-guide-title{display:block;font:var(--ds-text-ui-strong);color:var(--ds-color-text-1);margin:var(--ds-space-1) 0 var(--ds-space-2)}
+.guide-text{margin:0 0 var(--ds-space-2);font:var(--ds-text-meta);color:var(--ds-color-text-2)}
+.guide-text.on{color:var(--ds-color-text-1)}
+.cam-hint{margin:-2px 0 var(--ds-space-2) 64px;white-space:nowrap;font:var(--ds-text-ui-caption);color:var(--ds-color-text-2)} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+.check-row{display:flex;align-items:center;gap:var(--ds-space-4);height:32px;width:100%;border:0;background:transparent;padding:0;font:var(--ds-text-ui);color:var(--ds-color-text-1);text-align:left} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+.check-box{width:16px;height:16px;border-radius:var(--ds-radius-thumb);background:var(--ds-color-track);display:grid;place-items:center;flex:0 0 16px;transition:background var(--ds-motion-fast)} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+.check-row[aria-checked=true] .check-box{background:var(--ds-color-accent)}
+.check-box svg{opacity:0}.check-row[aria-checked=true] .check-box svg{opacity:1}
+
+/* Reserve the footer as a single group. Its geometry never follows event state. */
+#playback-footer{position:absolute;inset:100% 0 auto;padding-top:var(--ds-space-5)}
+/* One plate, one height. Collapsed it is the Driving assist button; expanded it widens
+   around the same centre to at most --playback-max, so the controls stay grouped. */
+:root #canvas-playback{
+  --assist-height:calc(var(--ds-size-touch) - var(--ds-space-2)); /* Existing 40px desktop Driving assist button. */
+  --playback-max:520px; /* ds-allow: keeps play, track and time together on wide canvases */
+  --playback-wheel-size:20px; /* ds-allow: same assist wheel dimensions as the workbench */
+  --playback-label-inset:calc(var(--ds-space-6) + var(--playback-wheel-size) + var(--ds-space-4));
+  --playback-divider-width:1px; /* ds-allow: preserve the approved divider hairline */
+  --playback-surface-border:1px; /* ds-allow: preserve the original Driving assist border */
+  --playback-expanded-inset:max(0px,calc((100% - var(--playback-max)) / 2));
+  --playback-expanded-x:max(0px,calc((100cqw - var(--playback-max)) / 2));
+  --playback-compact-x:calc((100cqw - var(--playback-compact)) / 2);
+  --playback-slit:calc(var(--playback-compact-x) + var(--playback-label-inset) + var(--playback-divider-width));
+  --playback-divider-inset:calc(var(--playback-expanded-inset) + var(--playback-label-inset));
+  --playback-inset:var(--playback-expanded-inset);
+  --playback-radius:var(--ds-radius-control);
+  --playback-motion:calc(var(--ds-motion-base) * 2); /* ds-allow: 320ms lets the small overtravel read */
+  --playback-close-motion:calc(var(--ds-motion-base) + var(--ds-motion-press)); /* ds-allow: 270ms close */
+  --playback-lead:calc(var(--ds-motion-fast) / 2);
+  --playback-spring:linear(0,.13 12%,.42 27%,.72 43%,.92 58%,1 71%,1.012 82%,1); /* ds-allow: restore the shared playback curve with 1.2% overtravel */
+  --playback-close-spring:var(--ds-motion-ease);
+  /* Island-style content swap: leaving content softens and shrinks a touch, arriving content
+     sharpens from a blur and grows into place. */
+  --playback-blur-out:6px; /* ds-allow: island-style content blur */
+  --playback-scale-out:.94; /* ds-allow: island-style content scale */
+  position:relative;inset:auto;height:var(--assist-height);display:block;container-type:inline-size;
+}
+#canvas-playback[data-mode=assist]{--playback-inset:max(0px,calc((100% - var(--playback-compact)) / 2))}
+.playback-surface{position:absolute;inset:0;pointer-events:none}
+.playback-surface::before,.playback-surface::after{content:"";position:absolute;inset:0;transition:clip-path var(--playback-motion) var(--playback-spring)}
+.playback-surface::before{background:var(--ds-color-line-control);clip-path:inset(0 var(--playback-inset) round var(--playback-radius))}
+.playback-surface::after{background:var(--ds-color-raised);clip-path:inset(var(--playback-surface-border) calc(var(--playback-inset) + var(--playback-surface-border)) round calc(var(--playback-radius) - var(--playback-surface-border)))}
+:root[data-theme=dark] .playback-surface::before{background:var(--ds-color-line-strong)}
+:root[data-theme=dark] .playback-surface::after{background:var(--ds-color-face)}
+/* The assist button keeps its hit target while the visible wheel and label travel. */
+:root #artboard #canvas-playback #scene-transport{
+  position:absolute;inset:0 auto auto 0;z-index:1;display:flex;align-items:center;justify-content:center;width:max-content;min-width:0;height:var(--assist-height);gap:var(--ds-space-4);
+  padding-inline:var(--ds-space-6);color:var(--ds-color-text-1);font:var(--ds-text-ui);background:transparent;box-shadow:none;
+  transform:translateX(calc(50cqw - 50%));
+  opacity:1;filter:none;scale:1;
+  transition-property:opacity,filter,scale;transition-duration:var(--ds-motion-base);transition-timing-function:var(--ds-motion-ease-out);transition-delay:calc(var(--ds-motion-fast) * 2);
+}
+:root #canvas-playback #scene-transport::before{content:none}
+:root #artboard #canvas-playback[data-mode=timeline] #scene-transport{opacity:0;filter:blur(var(--playback-blur-out));scale:var(--playback-scale-out);pointer-events:none;transition-duration:var(--ds-motion-press);transition-timing-function:var(--ds-motion-ease);transition-delay:0s}
+/* The shared wheel: one element, moving on the plate's curve between its two homes. */
+.playback-wheel-space{width:var(--playback-wheel-size);height:var(--playback-wheel-size);flex:0 0 var(--playback-wheel-size)}
+.playback-leading{position:absolute;z-index:2;top:calc((var(--assist-height) - var(--playback-wheel-size)) / 2);left:0;pointer-events:none;
+  transform:translateX(calc(var(--playback-expanded-x) + var(--ds-space-6)));transition:transform var(--playback-motion) var(--playback-spring) var(--playback-lead)}
+#canvas-playback[data-mode=assist] .playback-leading{transform:translateX(calc(var(--playback-compact-x) + var(--ds-space-6)));
+  transition:transform var(--playback-close-motion) var(--playback-close-spring) var(--playback-lead)}
+.playback-wheel{display:block;width:var(--playback-wheel-size);height:var(--playback-wheel-size);border-radius:50%;pointer-events:auto;
+  background:var(--assist-disc-off) url("../assist-wheel-off.svg") center/contain no-repeat;cursor:default;
+  transition:background-color var(--ds-motion-base) var(--ds-motion-ease)}
+#canvas-playback[data-mode=assist] .playback-wheel{pointer-events:none}
+#canvas-playback[data-mode=timeline] .playback-wheel[role=button]{cursor:pointer}
+#canvas-playback[data-mode=timeline] .playback-wheel[role=button]::before{content:"";position:absolute;inset:calc(-1 * var(--ds-space-4));}
+#canvas-playback .playback-wheel[role=button]:focus-visible{outline:var(--ds-space-1) solid var(--ds-color-text-1);outline-offset:var(--ds-space-1)}
+#canvas-playback[data-mode=timeline] .playback-wheel[role=img],#canvas-playback:has(#scene-transport[aria-checked=true]) .playback-wheel{background-color:var(--ds-color-accent-fill);background-image:url("../assist-wheel-on.svg")}
+.playback-label-measure{white-space:nowrap;visibility:hidden}
+.playback-label{display:none}
+#canvas-playback .playback-surface::before,#canvas-playback .playback-surface::after{transition-delay:var(--playback-lead)}
+#event-timeline{
+  position:absolute;inset:0;display:flex;align-items:center;gap:var(--ds-space-4);
+  padding-inline:calc(var(--playback-expanded-inset) + var(--ds-space-6));
+  padding-inline-start:calc(var(--playback-divider-inset) + var(--playback-divider-width) + var(--ds-space-1) + var(--ds-space-4));
+  /* The play button and track open from the centre outward on the plate's
+     curve, pushing the wheel left and the words right. Collapsed it is a zero-width slit in the gap
+     between the wheel and the words, so its edges travel with them. */
+  clip-path:inset(0 calc(100% - var(--playback-slit)) 0 var(--playback-slit));opacity:0;filter:blur(var(--playback-blur-out));pointer-events:none;
+  transition:clip-path var(--playback-close-motion) var(--playback-close-spring) var(--playback-lead),opacity var(--ds-motion-press) var(--ds-motion-ease) var(--ds-motion-base),filter var(--playback-close-motion) var(--ds-motion-ease) var(--playback-lead);
+}
+.tl-divider{
+  /* Travel with the wheel, outside the track's clip and blur. */
+  position:absolute;top:0;left:calc(var(--playback-wheel-size) + var(--ds-space-4));
+  width:var(--playback-divider-width);height:var(--playback-wheel-size);pointer-events:none;
+  background:color-mix(in srgb,var(--ds-color-text-3) 55%,transparent); /* ds-allow: approved divider color and opacity */
+  scale:1 .1;opacity:0;
+  transition:scale var(--ds-motion-press) var(--ds-motion-ease),opacity var(--ds-motion-press) var(--ds-motion-ease);
+}
+#canvas-playback[data-mode=timeline] .tl-divider{
+  scale:1;opacity:1;
+  transition:scale var(--ds-motion-base) var(--ds-motion-ease) var(--ds-motion-press),opacity var(--ds-motion-base) var(--ds-motion-ease) var(--ds-motion-press);
+}
+#canvas-playback[data-mode=timeline] #event-timeline{
+  clip-path:inset(0 calc(var(--playback-expanded-inset) + var(--ds-space-6) + var(--playback-time-w)) 0 calc(var(--playback-divider-inset) + var(--playback-divider-width)));
+  opacity:1;filter:none;pointer-events:auto;
+  /* While it opens, the block sharpens from a blur, finishing with the plate. */
+  transition:clip-path var(--playback-motion) var(--playback-spring) var(--playback-lead),opacity var(--ds-motion-base) var(--ds-motion-ease) var(--playback-lead),filter var(--playback-motion) var(--ds-motion-ease-out) var(--playback-lead)}
+#canvas-playback[data-mode=assist] .playback-surface::before,#canvas-playback[data-mode=assist] .playback-surface::after{transition-duration:var(--playback-close-motion);transition-timing-function:var(--playback-close-spring)}
+:root #artboard #canvas-playback[data-motion=instant] :is(#scene-transport,.playback-label,#event-timeline,.playback-leading,.playback-wheel,.tl-divider),
+#canvas-playback[data-motion=instant] .playback-surface::before,#canvas-playback[data-motion=instant] .playback-surface::after{transition:none}
+@media (prefers-reduced-motion:reduce){
+  #interaction-settings[data-motion=live] .event-disclosure{transition:none}
+  :root #artboard #canvas-playback :is(#scene-transport,#event-timeline),#canvas-playback .playback-surface::before,#canvas-playback .playback-surface::after{transition:opacity var(--ds-motion-fast) var(--ds-motion-ease)}
+  #canvas-playback[data-mode] :is(.playback-leading,.tl-divider){transition:none}
+}
+.tl-play{width:32px;height:32px;flex:0 0 32px;border:0;padding:0;border-radius:var(--ds-radius-control);background:transparent;color:var(--ds-color-text-1);display:grid;place-items:center;transition:background var(--ds-motion-fast)} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+@media (hover:hover) and (pointer:fine){.tl-play:hover{background:var(--ds-color-track)}}
+.tl-play:active{transform:scale(var(--ds-motion-press-scale))}
+.tl-body{flex:1;min-width:0;height:32px;display:flex;align-items:center;padding:0 var(--ds-space-3)} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+.tl-track{position:relative;height:4px;width:100%} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+.tl-track{background:var(--ds-color-track);border-radius:var(--ds-radius-pill)}
+:root[data-theme=dark] .tl-track{background:var(--ds-color-selected)}
+.tl-progress{position:absolute;inset:0 auto 0 0;width:var(--timeline-progress);background:var(--ds-color-accent);border-radius:inherit}
+.tl-thumb{position:absolute;top:50%;left:var(--timeline-progress);width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:#FFFFFF;box-shadow:0 0 0 .5px rgba(0,0,0,.14),0 1px 3px rgba(0,0,0,.24);pointer-events:none;transition:width var(--ds-motion-fast),height var(--ds-motion-fast),margin var(--ds-motion-fast)} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+.tl-body:hover .tl-thumb,.tl-range:focus-visible+.tl-thumb{width:14px;height:14px;margin:-7px 0 0 -7px} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+.tl-range{position:absolute;left:-7px;right:-7px;top:-16px;height:36px;width:calc(100% + 14px);margin:0;opacity:0;cursor:pointer} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+.tl-range:focus-visible+.tl-thumb{outline:2px solid var(--ds-color-text-1);outline-offset:2px} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+.tl-readout{flex:0 0 var(--playback-time-w)} /* holds the place the travelling time lands in */
+.tl-time{text-align:right;font:var(--ds-text-ui);font-variant-numeric:tabular-nums;color:var(--ds-color-text-2)} /* ds-allow: 44px fits "10.0 s" in tabular figures, so the time never shifts */
+.tl-play:focus-visible,.tb-btn:focus-visible,.avatar:focus-visible,.check-row:focus-visible,.format-options button:focus-visible,.dlg button:focus-visible{outline:2px solid var(--ds-color-text-1);outline-offset:2px} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+
+/* Dialogs */
+.scrim{position:fixed;inset:0;z-index:var(--ds-z-dialog);background:var(--ds-color-scrim);display:grid;place-items:center;padding:16px;animation:proto-fade var(--ds-motion-menu) var(--ds-motion-ease)} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+@keyframes proto-fade{from{opacity:0}to{opacity:1}}
+.dlg{width:min(480px,100vw - 32px);box-sizing:border-box;padding:var(--ds-space-8);border-radius:var(--ds-radius-stage);background:var(--ds-color-raised);box-shadow:var(--ds-shadow-dialog);display:flex;flex-direction:column;gap:var(--ds-space-7);animation:proto-menu var(--ds-motion-menu) var(--ds-motion-ease)} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+:root[data-theme=dark] .dlg{background:var(--ds-color-face);box-shadow:0 0 0 1px var(--ds-color-line-strong),var(--ds-shadow-dialog)}
+.dlg h2{padding:0;height:auto;letter-spacing:0;margin:0;font:var(--ds-text-heading);color:var(--ds-color-text-1)}
+.dlg .lead{margin:var(--ds-space-2) 0 0;font:var(--ds-text-meta);color:var(--ds-color-text-2)}
+.dlg .actions{display:flex;justify-content:flex-end;gap:var(--ds-space-4)}
+.d-btn{height:var(--ds-size-button);padding:0 var(--ds-space-5);border:0;border-radius:var(--ds-radius-control);font:var(--ds-text-ui-strong);display:inline-flex;align-items:center;justify-content:center;gap:var(--ds-space-4);background:var(--ds-color-raised);color:var(--ds-color-text-1);box-shadow:0 0 0 1px var(--ds-color-line-control),var(--ds-shadow-lift)}
+.d-btn.primary{background:var(--ds-color-accent-fill);color:var(--ds-color-on-accent);box-shadow:none}
+.d-btn.text{background:transparent;box-shadow:none;font:var(--ds-text-ui)}
+.d-btn.block{width:100%}
+.d-btn:active{transform:scale(var(--ds-motion-press-scale))}
+.d-btn[aria-disabled=true]{opacity:var(--ds-motion-disabled-opacity)}
+.field{display:flex;flex-direction:column;gap:var(--ds-space-2)}
+.field span{font:var(--ds-text-ui);color:var(--ds-color-text-2)}
+.field input,.field select{height:var(--ds-size-control);border:0;border-radius:var(--ds-radius-control);background:var(--ds-color-track);padding:0 var(--ds-space-4);font:var(--ds-text-ui);color:var(--ds-color-text-1)}
+.field input::placeholder{color:var(--ds-color-text-3)}
+.field input:focus-visible,.field select:focus-visible{outline:2px solid var(--ds-color-text-1);outline-offset:2px} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+.field input[aria-invalid=true]{box-shadow:0 0 0 1px var(--ds-color-danger)}
+.field .err{font:var(--ds-text-meta);color:var(--ds-color-danger)}
+.divider{display:flex;align-items:center;gap:var(--ds-space-5);font:var(--ds-text-ui-caption);color:var(--ds-color-text-2)}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--ds-color-line-control)} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+.fine{margin:0;font:var(--ds-text-ui-caption);color:var(--ds-color-text-2)}
+
+/* Guide line under the timeline */
+#tl-guide{display:none;box-sizing:content-box;height:2lh;padding-top:var(--ds-space-5);justify-items:center;align-items:start;pointer-events:none;font:var(--ds-text-meta);opacity:0;transition:opacity var(--ds-motion-fast) var(--ds-motion-ease)}
+#playback-footer[data-reserve-guide=true] #tl-guide{display:grid}
+#canvas-playback[data-mode=timeline]~#tl-guide{opacity:1}
+#tl-guide p{grid-area:1/1;margin:0;max-width:560px;text-align:center;font:var(--ds-text-meta);color:var(--ds-color-text-2)} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+#tl-guide p.in{animation:tl-guide-in var(--ds-motion-enter) var(--ds-motion-ease-out) both}
+#tl-guide p.out{animation:tl-guide-out var(--ds-motion-base) var(--ds-motion-ease) both}
+@keyframes tl-guide-in{from{opacity:0}to{opacity:1}}
+@keyframes tl-guide-out{from{opacity:1}to{opacity:0}}
+@media (prefers-reduced-motion:reduce){#tl-guide p.in{animation:none}#tl-guide p.out{display:none}}
+#tl-guide b{font:var(--ds-text-ui-strong);line-height:18px;color:var(--ds-color-text-1);margin-right:6px} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+
+/* Auth dialog */
+.dlg.auth{width:min(400px,100vw - 32px);padding:32px;gap:var(--ds-space-7);position:relative} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+.dlg-close{position:absolute;top:12px;right:12px;width:28px;height:28px;border:0;border-radius:var(--ds-radius-control);background:transparent;color:var(--ds-color-text-2);display:grid;place-items:center;padding:0} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+@media (hover:hover) and (pointer:fine){.dlg-close:hover{background:var(--ds-color-track);color:var(--ds-color-text-1)}}
+.auth-head{display:flex;flex-direction:column;align-items:center;text-align:center;gap:var(--ds-space-2);padding:var(--ds-space-2) 0 var(--ds-space-2)}
+.auth-head .unused{width:44px;height:44px;border-radius:11px;margin-bottom:var(--ds-space-5);box-shadow:0 0 0 1px var(--ds-color-line-control)} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+.auth-head h2{text-align:center}
+.auth-head .lead{margin:0;max-width:280px} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+.d-btn.lg{height:40px;font:var(--ds-text-ui-strong)} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+.field input.lg{height:40px;padding:0 var(--ds-space-5)} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+.auth form{display:flex;flex-direction:column;gap:var(--ds-space-5)}
+.auth .fine{text-align:center}
+.auth .fine a{color:var(--ds-color-text-2);text-underline-offset:3px} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+.code-input{text-align:center;letter-spacing:.5em;font-variant-numeric:tabular-nums}
+
+/* Upgrade dialog */
+.dlg.upgrade{width:min(400px,100vw - 32px);padding:var(--ds-space-10);gap:var(--ds-space-8);position:relative;box-shadow:0 0 0 1px rgba(0,0,0,.06),0 2px 6px rgba(0,0,0,.04),var(--ds-shadow-dialog)} /* ds-allow: retain the existing upgrade dialog dimensions and depth treatment */
+.dlg.upgrade::before{content:"";position:absolute;inset:0 0 auto 0;height:160px;border-radius:inherit;background:linear-gradient(180deg,rgba(242,213,143,.26) 0%,rgba(242,213,143,.09) 45%,rgba(255,255,255,0) 100%);pointer-events:none} /* ds-allow: retain the user-approved Pro gold gradient */
+:root[data-theme=dark] .dlg.upgrade::before{content:none} /* Dark mode: the gold wash muddied the surface (author review 2026-11-19); the gold checks carry Pro */
+.dlg.upgrade>*{position:relative}
+.dlg.upgrade .dlg-close{position:absolute;inset-block-start:var(--ds-space-4);inset-inline-end:var(--ds-space-4);width:var(--ds-size-touch);height:var(--ds-size-touch)}
+.dlg.upgrade .dlg-close svg{width:var(--ds-size-icon);height:var(--ds-size-icon)}
+/* Group rhythm: title → price 8, price → renewal 2, group → group 24 (dialog gap), benefit → benefit 8, button → note 12. */
+.up-head{display:flex;flex-direction:column;gap:var(--ds-space-4);padding-inline-end:var(--ds-space-10)}
+.up-head .lead{margin:0}
+.up-price{display:flex;flex-direction:column;gap:var(--ds-space-1)}
+.up-price:not([data-ready]){visibility:hidden}
+.up-price[hidden]{display:none}
+.up-price .price{display:flex;align-items:baseline;flex-wrap:wrap;gap:0 var(--ds-space-3);margin:0;font:var(--ds-text-meta);color:var(--ds-color-text-2)}
+.up-price .price strong{min-block-size:1lh;font:var(--ds-text-display);font-variant-numeric:tabular-nums;color:var(--ds-color-text-1)}
+.up-price .renewal{margin:0;font:var(--ds-text-meta);color:var(--ds-color-text-2)}
+.checkout-note:not([hidden]){display:flex;align-items:center;justify-content:center;gap:var(--ds-space-3);margin:0;font:var(--ds-text-meta);color:var(--ds-color-text-2)}
+.checkout-note svg{flex:none;width:var(--ds-size-icon);height:var(--ds-size-icon)}
+.benefits{display:grid;gap:var(--ds-space-4);margin:0;padding:0;list-style:none}
+.benefits li{display:flex;align-items:center;gap:var(--ds-space-4);font:var(--ds-text-meta);color:var(--ds-color-text-1)}
+.benefits svg{flex:none;width:var(--ds-size-icon);height:var(--ds-size-icon);padding:var(--ds-space-1);box-sizing:border-box;border-radius:50%;color:#7A5000;background:linear-gradient(160deg,#FBEDC4,#EFCF83);box-shadow:inset 0 0 0 .5px rgba(150,100,10,.30)} /* ds-allow: retain the existing Pro benefit check */
+:root[data-theme=dark] .benefits svg{color:#F2CF7E;background:rgba(242,207,126,.16)} /* ds-allow: retain the existing Pro benefit check */
+.upgrade form{display:grid;gap:var(--ds-space-6)}
+.upgrade form .field{min-width:0}
+.upgrade .format-trigger{flex:none;height:var(--ds-size-control);padding-inline:var(--ds-space-4);border-radius:var(--ds-radius-control);background:var(--ds-color-track);font:var(--ds-text-ui)}
+@media (pointer:coarse){.upgrade .format-trigger{height:var(--ds-size-touch)}}
+.upgrade .format-trigger span{overflow:hidden;text-overflow:ellipsis;font:var(--ds-text-ui);color:var(--ds-color-text-1)}
+.upgrade .format-trigger svg{width:var(--ds-size-icon);height:var(--ds-size-icon);stroke-width:var(--ds-size-icon-stroke)}
+.upgrade .format-options button{overflow:hidden;text-overflow:ellipsis}
+.upgrade .err{margin:0;font:var(--ds-text-meta);color:var(--ds-color-danger)}
+.upgrade #checkout{height:auto;min-height:var(--ds-size-touch);padding:var(--ds-space-2);text-align:center}
+.upgrade #checkout[aria-busy=true]{background:var(--ds-color-track);color:var(--ds-color-text-3);box-shadow:none}
+.up-action{display:grid;gap:var(--ds-space-5)}
+/* Demo checkout (static prototype only) and the simulated Pro activation. */
+.co-summary{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:baseline;gap:var(--ds-space-2) var(--ds-space-6);padding:var(--ds-space-6);border-radius:var(--ds-radius-control);background:var(--ds-color-track)}
+.co-summary>span{font:var(--ds-text-meta);color:var(--ds-color-text-1)}
+.co-summary .up-price{display:contents}
+.co-summary .up-price .price{color:var(--ds-color-text-1)}
+.co-summary .up-price .price strong{min-block-size:0;font:var(--ds-text-meta)}
+.co-summary .up-price .renewal{grid-column:1/-1}
+.checkout-demo .actions .d-btn{flex:1 1 0}
+.dlg.pro-active .d-btn.block{min-height:var(--ds-size-touch)}
+
+/* Prototype control bar: outside the product UI */
+.proto-bar{position:fixed;top:0;left:0;right:0;height:36px;z-index:45;display:flex;align-items:center;justify-content:center;gap:12px;background:#1D1D1F;color:#C8C8CC;font:var(--ds-text-ui-caption)} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+.proto-bar b{font:var(--ds-text-ui-title);color:#FFFFFF} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+.proto-bar .pb-seg{display:flex;gap:2px;padding:2px;border-radius:var(--ds-radius-control);background:rgba(255,255,255,.1)} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+.proto-bar .pb-seg button{height:24px;padding:0 12px;border:0;border-radius:var(--ds-radius-thumb);background:transparent;color:#C8C8CC;font:var(--ds-text-ui-caption)} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+.proto-bar .pb-seg button[aria-checked=true]{background:#FFFFFF;color:#1D1D1F;font:var(--ds-text-ui-title)} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+.proto-bar .pb-seg button:focus-visible{outline:2px solid #FFFFFF;outline-offset:2px} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+@media(max-width:639px){ /* ds-allow: Match the workbench's mobile controls breakpoint. */
+ .proto-bar > span{display:none}
+ .proto-bar b,.proto-bar .pb-seg button{white-space:nowrap}
+ .proto-bar .pb-seg button{padding-inline:var(--ds-space-3)}
+}
+html body{padding-top:36px;box-sizing:border-box} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+html body #app{height:calc(100dvh - 36px)!important;min-height:0} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+
+/* Spacing model change (author review 2026-11-08): item-to-item 32 -> 36, label column 56 -> 64 (SPEC .ds-prop) */
+html #inspector .property{height:36px;min-height:36px} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+html #inspector .property-label{width:64px;min-width:64px;flex:0 0 64px} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+/* Offset the first stacked label to line up with the text inside a switch row
+   below a heading. Keep this separate from the gap inside each field. */
+#inspector{
+  --preset-heading-offset:calc(var(--ds-space-4) + var(--ds-space-1));
+  --preset-label-gap:var(--ds-space-2);
+  --preset-field-gap:var(--ds-space-5);
+  --preset-control-height:calc(var(--ds-size-control) + var(--ds-space-2));
+  --preset-button-height:calc(var(--preset-control-height) - var(--ds-size-thumb-inset) * 2)
+}
+html #inspector :is(#scene-properties,#shared-weather){padding-block-start:var(--preset-heading-offset)}
+html #inspector #scene-properties{gap:var(--preset-field-gap)}
+html #inspector :is(#scene-properties>.property,#shared-weather,#interaction-settings .event-params>.property){
+  grid-template-columns:minmax(0,1fr);height:auto;min-height:0;row-gap:var(--preset-label-gap);align-items:start
+}
+html #inspector :is(#scene-properties,#interaction-settings .event-params) .property-label{
+  width:auto;min-width:0
+}
+:root #inspector :is(.segment,.shared-weather-options){height:var(--preset-control-height)}
+:root #inspector :is(.segment button,.shared-weather-options button,.segment-indicator){height:var(--preset-button-height)}
+:root #inspector .segment[data-param=camera]{
+  display:grid;grid-auto-flow:column;grid-auto-columns:minmax(max-content,1fr);gap:var(--ds-space-2)
+}
+:root #inspector .segment[data-param=camera] button{padding-inline:var(--ds-space-4)}
+:root #inspector .segment[data-param=camera] [data-value=parked]{padding-inline:var(--ds-space-5)}
+:root #inspector .segment button[aria-disabled=true]{
+  color:var(--ds-color-text-3);cursor:default
+}
+@media(max-width:639px), (max-width:959px) and (orientation:portrait){ /* ds-allow: Match the workbench's existing stacked-field breakpoints. */
+  #inspector{
+    --preset-heading-offset:var(--ds-space-4);
+    --preset-label-gap:var(--ds-space-3);
+    --preset-field-gap:var(--ds-space-6);
+    --preset-control-height:calc(var(--ds-size-touch) + var(--ds-space-1))
+  }
+}
+html #inspector #layers .layer-row{height:36px;min-height:36px} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+
+/* Replay reuses the Junction end-of-playback icon */
+.tl-replay{width:16px;height:16px;display:block;background:currentColor;-webkit-mask:url("./replay.svg") center/contain no-repeat;mask:url("./replay.svg") center/contain no-repeat} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+/* Toolbar order: tools, then account */
+.toolbar #theme{order:1}
+.toolbar .account-actions{order:2;margin-left:0}
+.toolbar .project-name{order:0;margin-right:auto}
+.format-options button[aria-disabled=true]{color:var(--ds-color-text-3)}
+
+/* Toolbar rhythm: two groups. Tools | account. Optical gaps: 16 between groups, 8 inside the account group */
+.toolbar{gap:0}
+.toolbar #theme{margin-right:11px} /* 28px box, 18px glyph: 5px inset + 11 = 16 visible */ /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+.account-actions{gap:var(--ds-space-4)}
+.avatar span{width:28px;height:28px} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+
+.d-btn.primary{background:linear-gradient(180deg,color-mix(in srgb,var(--ds-color-accent-fill) 92%,white) 0%,var(--ds-color-accent-fill) 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 1px 2px rgba(20,113,214,.25)} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+
+#tooltip{white-space:pre}
+/* Camera during an event: a plain value in the control column, aligned with select text. */
+/* New run: the playhead slides back to 0. */
+/* Same 720ms and in-out shape as the engine's camera handoff, so bar and picture land together. */
+#event-timeline.is-resetting .tl-progress{transition:width var(--playback-handoff) var(--playback-handoff-ease)}
+#event-timeline.is-resetting .tl-thumb{transition:left var(--playback-handoff) var(--playback-handoff-ease)}
+:root{--playback-handoff:720ms;--playback-handoff-ease:cubic-bezier(.45,0,.55,1)} /* ds-allow: mirrors the engine camera handoff (720ms smootherstep) */
+/* Phase boundaries appear only while the pointer is over the track, as hairline gaps. */
+.tl-notches{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity var(--ds-motion-fast) var(--ds-motion-ease)}
+.tl-notches span{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--ds-color-raised)} /* ds-allow: hairline gap in a 4px track */
+:root[data-theme=dark] .tl-notches span{background:var(--ds-color-face)}
+.tl-body:hover .tl-notches{opacity:1}
+/* Stop-and-wait: the track breaks into dots while the vehicle stands still; the ring marks its release. */
+.tl-wait{position:absolute;top:0;bottom:0;pointer-events:none;--tl-cut:var(--ds-color-raised);background:radial-gradient(circle at 3px 50%,transparent 1.5px,var(--tl-cut) 2px) 0 0/6px 100% repeat-x} /* ds-allow: dot pitch and radius drawn inside a 4px track */
+:root[data-theme=dark] .tl-wait{--tl-cut:var(--ds-color-face)}
+.tl-release{position:absolute;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;box-sizing:border-box;border-radius:50%;pointer-events:none;background:var(--ds-color-raised);border:1.5px solid var(--ds-color-text-3);transition:background var(--ds-motion-fast) var(--ds-motion-ease),border-color var(--ds-motion-fast) var(--ds-motion-ease)} /* ds-allow: 8px marker on a 4px track, 1.5px ring */
+:root[data-theme=dark] .tl-release{background:var(--ds-color-face)}
+#event-timeline[data-wait=in] .tl-release{border-color:var(--ds-color-text-1)}
+#event-timeline[data-wait=after] .tl-release{background:var(--ds-color-accent);border-color:var(--ds-color-accent)}
+/* Narrow desktop library: a smaller thumbnail leaves room for the full vehicle name. */
+@media (max-width:1179px){ /* ds-allow: matches the workbench narrow-library breakpoint */
+  :root .shell-vehicle-card .thumb{width:var(--ds-space-10)}
+  :root .shell-vehicle-card .thumb img{width:var(--ds-space-10);height:auto}
+}
+/* State swaps settle instead of popping. */
+@keyframes proto-fade-in{from{opacity:0}to{opacity:1}}
+@keyframes proto-icon-in{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:none}}
+#scene-properties .segment[data-param=camera]:not([hidden]){animation:proto-fade-in var(--ds-motion-base) var(--ds-motion-ease)}
+#layers .layer-row{transition:opacity var(--ds-motion-base) var(--ds-motion-ease)}
+#tl-play svg{animation:proto-icon-in var(--ds-motion-base) var(--ds-motion-ease-out)}
+@media (prefers-reduced-motion:reduce){#scene-properties .segment[data-param=camera],#tl-play svg{animation:none}}
+/* Dragging: the thumb grows and the phase gaps show, as on macOS sliders. */
+.tl-range:active+.tl-thumb{width:16px;height:16px;margin:-8px 0 0 -8px} /* ds-allow: pressed thumb size */
+.tl-track:has(.tl-range:active) .tl-notches{opacity:1}
+#inspector-scroll.scene-in{animation:proto-fade-in var(--ds-motion-base) var(--ds-motion-ease)}
+@media (prefers-reduced-motion:reduce){#inspector-scroll.scene-in{animation:none}}
+@media (prefers-reduced-motion:reduce){:root #artboard #canvas-playback #scene-transport,#event-timeline{filter:none!important;scale:1!important}#event-timeline{clip-path:none!important}}
+@media (prefers-reduced-motion:reduce){#canvas-playback .playback-wheel{scale:1!important}}
+/* The travelling words. Collapsed they sit where the button's label is; expanded they sit in the
+   time slot at the right end. Box and words move on the plate's curve; the label hands over to the
+   time during the travel, shrinking slightly as it goes. */
+:root #canvas-playback{--playback-time-w:44px} /* ds-allow: fits "10.0 s" in tabular figures */
+.playback-text{position:absolute;z-index:2;top:0;height:var(--assist-height);display:grid;grid-template-columns:minmax(0,1fr);align-items:center;pointer-events:none;
+  left:0;transform:translateX(calc(100cqw - var(--playback-expanded-x) - var(--ds-space-6) - var(--playback-time-w)));width:var(--playback-time-w);
+  transition:transform var(--playback-motion) var(--playback-spring) var(--playback-lead),width var(--playback-motion) var(--playback-spring) var(--playback-lead)}
+#canvas-playback[data-mode=assist] .playback-text{transform:translateX(calc(var(--playback-compact-x) + var(--playback-label-inset)));width:var(--playback-label-w);
+  transition-duration:var(--playback-close-motion);transition-timing-function:var(--playback-close-spring)}
+.playback-text>span{grid-area:1/1;white-space:nowrap;font:var(--ds-text-ui);transition-property:opacity,filter,scale;transition-timing-function:var(--ds-motion-ease-out)}
+.pt-label{justify-self:start;transform-origin:left center;color:var(--ds-color-text-1)}
+.pt-time{justify-self:end;transform-origin:right center;font-variant-numeric:tabular-nums;color:var(--ds-color-text-2)}
+/* expanded: time shown */
+#canvas-playback .pt-label{opacity:0;filter:blur(var(--playback-blur-out));scale:var(--playback-scale-out);transition-duration:var(--ds-motion-base);transition-delay:var(--playback-lead)}
+#canvas-playback .pt-time{opacity:1;filter:none;scale:1;transition-duration:var(--ds-motion-base);transition-delay:var(--ds-motion-fast)}
+/* collapsed: label shown */
+#canvas-playback[data-mode=assist] .pt-time{opacity:0;filter:blur(var(--playback-blur-out));scale:var(--playback-scale-out);transition-delay:0s}
+#canvas-playback[data-mode=assist] .pt-label{opacity:1;filter:none;scale:1;transition-delay:var(--ds-motion-press)}
+:root #artboard #canvas-playback[data-motion=instant] :is(.playback-text,.playback-text>span){transition:none}
+@media (prefers-reduced-motion:reduce){.playback-text{transition:none}.playback-text>span{filter:none!important;scale:1!important}}
