@@ -189,7 +189,7 @@ html:root #inspector-scroll>:is(#interaction-settings,#shared-settings,section:h
 .tl-play:focus-visible,.tb-btn:focus-visible,.avatar:focus-visible,.check-row:focus-visible,.format-options button:focus-visible,.dlg button:focus-visible{outline:2px solid var(--ds-color-text-1);outline-offset:2px} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
 
 /* Dialogs */
-.scrim{position:fixed;inset:0;z-index:var(--ds-z-dialog);background:var(--ds-color-scrim);display:grid;place-items:center;padding:16px;animation:proto-fade var(--ds-motion-menu) var(--ds-motion-ease)} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+.scrim{position:fixed;inset:0;z-index:var(--ds-z-dialog);background:var(--ds-color-scrim);display:grid;place-items:safe center;overflow:auto;overscroll-behavior:contain;padding:var(--ds-space-6);animation:proto-fade var(--ds-motion-menu) var(--ds-motion-ease)} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
 @keyframes proto-fade{from{opacity:0}to{opacity:1}}
 .dlg{width:min(480px,100vw - 32px);box-sizing:border-box;padding:var(--ds-space-8);border-radius:var(--ds-radius-stage);background:var(--ds-color-raised);box-shadow:var(--ds-shadow-dialog);display:flex;flex-direction:column;gap:var(--ds-space-7);animation:proto-menu var(--ds-motion-menu) var(--ds-motion-ease)} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
 :root[data-theme=dark] .dlg{background:var(--ds-color-face);box-shadow:0 0 0 1px var(--ds-color-line-strong),var(--ds-shadow-dialog)}
@@ -249,7 +249,7 @@ html:root #inspector-scroll>:is(#interaction-settings,#shared-settings,section:h
 .dlg.upgrade::before{content:"";position:absolute;inset:0 0 auto 0;height:160px;border-radius:inherit;background:linear-gradient(180deg,rgba(242,213,143,.26) 0%,rgba(242,213,143,.09) 45%,rgba(255,255,255,0) 100%);pointer-events:none} /* ds-allow: retain the user-approved Pro gold gradient */
 :root[data-theme=dark] .dlg.upgrade::before{content:none} /* Dark mode: the gold wash muddied the surface (author review 2026-11-19); the gold checks carry Pro */
 .dlg.upgrade>:not(.dlg-close){position:relative}
-/* One left edge for every group. Group rhythm: title → price 8, group → group 24 (dialog gap), benefit → benefit 8, button → note 12. */
+/* One left edge for every group. Group rhythm: title → price 8, group → group 24 (dialog gap), benefit → benefit 12, button → note 12. */
 .up-head{display:flex;flex-direction:column;gap:var(--ds-space-4);padding-inline-end:var(--ds-space-11)}
 .up-head .lead{margin:0}
 .up-price{display:flex;flex-direction:column;gap:var(--ds-space-1)}
@@ -259,7 +259,7 @@ html:root #inspector-scroll>:is(#interaction-settings,#shared-settings,section:h
 .up-price .price strong{min-block-size:1lh;font:var(--ds-text-display);font-variant-numeric:tabular-nums;color:var(--ds-color-text-1)}
 .checkout-note:not([hidden]){display:flex;align-items:center;gap:var(--ds-space-3);margin:0;font:var(--ds-text-meta);color:var(--ds-color-text-2)}
 .checkout-note svg{flex:none;width:var(--ds-size-icon);height:var(--ds-size-icon)}
-.benefits{display:grid;gap:var(--ds-space-4);margin:0;padding:0;list-style:none}
+.benefits{display:grid;gap:var(--ds-space-5);margin:0;padding:0;list-style:none}
 .benefits li{display:flex;align-items:center;gap:var(--ds-space-4);font:var(--ds-text-meta);color:var(--ds-color-text-1)}
 .benefits svg{flex:none;width:var(--ds-size-icon);height:var(--ds-size-icon);padding:var(--ds-space-1);box-sizing:border-box;border-radius:50%;color:#7A5000;background:linear-gradient(160deg,#FBEDC4,#EFCF83);box-shadow:inset 0 0 0 .5px rgba(150,100,10,.30)} /* ds-allow: retain the existing Pro benefit check */
 :root[data-theme=dark] .benefits svg{color:#F2CF7E;background:rgba(242,207,126,.16)} /* ds-allow: retain the existing Pro benefit check */
@@ -294,6 +294,12 @@ html:root #inspector-scroll>:is(#interaction-settings,#shared-settings,section:h
 }
 html body{padding-top:36px;box-sizing:border-box} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
 html body #app{height:calc(100dvh - 36px)!important;min-height:0} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+
+@media(max-width:479px) and (max-height:400px){ /* ds-allow: Below the two-column phone breakpoint, keep the settings reachable with a short viewport. */
+ :root .workspace{overflow-y:auto;grid-template-rows:var(--ds-size-touch) minmax(var(--ds-space-14),42dvh) max-content!important}
+ :root #inspector{display:block}
+ :root #inspector-scroll{overflow:visible;mask-image:none}
+}
 
 /* Spacing model change (author review 2026-11-08): item-to-item 32 -> 36, label column 56 -> 64 (SPEC .ds-prop) */
 html #inspector .property{height:36px;min-height:36px} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
