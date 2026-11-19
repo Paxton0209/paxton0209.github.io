@@ -8,13 +8,18 @@ export function brakingSpeed(elapsed,{speed,cruise,brake,scale=1}){
 
 export function junctionBrakeReveal(seconds){return Math.max(0,Math.min(1,(seconds-.65)/.85));}
 
+function weatherPace(world, rain, snow){
+ const w=world.draftWeather?.weights;
+ return w?1-.12*(w.overcast||0)-rain*(w.rain||0)-snow*(w.snow||0):1;
+}
+export const roadCruiseSpeed=world=>OPEN_ROAD_CRUISE*weatherPace(world,.25,.25);
+
 // Playback pause preserves the physical speed at the held frame.
 export function drivingSpeed(world,id){
  if(['05','08'].includes(id))return Math.max(0,world.draftSpeed??0);
  if(Number.isFinite(world.draftCruiseSpeed))return Math.max(0,world.draftCruiseSpeed);
  const continuous=['02','09','03','06','07'].includes(id);
- const w=world.draftWeather?.weights,weather=w?1-.12*(w.overcast||0)-(continuous?.25:.22)*(w.rain||0)-(continuous?.25:.38)*(w.snow||0):1;
- return (continuous?OPEN_ROAD_CRUISE:16.8)*weather;
+ return continuous?roadCruiseSpeed(world):16.8*weatherPace(world,.22,.38);
 }
 export function forwardPathEnd(start,speed,total,boundary=Infinity,seconds=LOOKAHEAD_SECONDS){
  return Math.max(start,Math.min(start+previewDistance(speed)*seconds/LOOKAHEAD_SECONDS,total-1,boundary));

@@ -920,7 +920,7 @@ html:not([data-cached-preview=true]) .preview[aria-busy=true]{background-image:n
  if(q.has('qa')){const script=document.createElement('script');script.type='module';script.src='scripts/vehicle-diagnostics.js';document.head.append(script);}
 if(cachedPreviewScroll>0)window.scrollTo({top:cachedPreviewScroll,behavior:'instant'});
 })();
-<\/script><script type="module" src="../ui-draft/runtime.bundle.js?v=2d5e564fa083"><\/script></body></html>
+<\/script><script type="module" src="../ui-draft/runtime.bundle.js?v=bf643012b37c"><\/script></body></html>
 `;var ot=`<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
   <defs><path id="spoke" d="M8 1.25v2.5"/></defs>
   <use href="#spoke"/>
