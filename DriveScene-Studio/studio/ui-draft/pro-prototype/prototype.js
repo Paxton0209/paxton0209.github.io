@@ -749,7 +749,6 @@ $('interaction-settings').addEventListener('click', (e) => {
   if (isParkingScene(S.scene)) {
     const state = preview.bridge()?.get({audit:false});
     if (parkingInteractionsLocked() || state?.parking?.mode === 'out') return;
-    resumeAfterScrub = null;
     const turningOff = active() && S.event === event;
     const completed = state?.event?.event === event && state.parking.complete;
     if (turningOff && completed) {
@@ -759,6 +758,7 @@ $('interaction-settings').addEventListener('click', (e) => {
       void hideParked();
     }
   }
+  resumeAfterScrub = null;
   const wasPlaying = S.playing;
   closeMenu();
   if (['road', 'elevated', 'ramp'].includes(S.scene) && preview.hasMountedScene(S.scene)) {
@@ -1099,9 +1099,13 @@ function buildTimeline() {
   $('tl-range').addEventListener('change', () => {
     const resume = resumeAfterScrub; resumeAfterScrub = null;
     if (!resume || !isTimeline() || S.t >= total()) return;
-    S.playing = true;
-    void preview.apply(bridge => { if (active()) bridge.setPlaying(true); });
-    updateTimeline();
+    void preview.apply(bridge => {
+      if (!isTimeline()) return;
+      bridge.setPlaying(true);
+      const state = bridge.get({audit: false});
+      S.playing = state.requestedPlaying;
+      updateTimeline(state);
+    });
   });
   document.addEventListener('keydown', (e) => {
     if (e.key !== ' ' || !isTimeline() || dialog || openMenu || e.target.closest?.('button, input, select, textarea, [role=radio], [role=switch]')) return;
@@ -1112,10 +1116,16 @@ function buildTimeline() {
     if (parkedPosition) void hideParked();
     resumeAfterScrub ??= S.playing;
     const progress = e.target.valueAsNumber;
-    S.t = progress === Number(e.target.max) ? total() : progress / 100;
+    const time = progress === Number(e.target.max) ? total() : progress / 100;
+    S.t = time;
     S.playing = false;
-    void preview.apply(bridge => { if (active() && !S.playing) bridge.seekRoadworks(S.t + (S.roadRun?.eventStart ?? 0)); });
-    updateTimeline();
+    void preview.apply(bridge => {
+      if (!isTimeline()) return;
+      bridge.seekRoadworks(time + (S.roadRun?.eventStart ?? 0));
+      S.t = time;
+      S.playing = false;
+      updateTimeline(bridge.get({audit: false}));
+    });
   });
   // Hover the track to read the phase at that point; the track itself stays one clean line.
   const range = $('tl-range'), track = tl.querySelector('.tl-track');
@@ -1548,6 +1558,7 @@ function selectScene(scene, animate = false) {
 const sceneMemory = {};
 function changeScene(scene, animate) {
   if (scene === S.scene) return;
+  resumeAfterScrub = null;
   closeMenu();
   sceneMemory[S.scene] = {camera: S.camera, eventCamera: S.eventCamera, ...(active() && {event: S.event, t: Math.max(0, S.t - (S.roadRun?.handoff ?? 0)), playing: S.playing, cutInSeed: S.cutInSeed})};
   selectScene(scene, animate);
