@@ -1238,7 +1238,7 @@ function openDialog(el) {
   closeDialog(true); returnFocus = opener; dialog = el; document.body.append(el);
   (el.querySelector('[role=dialog]') || el).focus({ preventScroll: true });
   el.addEventListener('pointerdown', (e) => { if (e.target === el) closeDialog(); });
-  // A double click must not reach the button that replaces the one under the pointer (Continue, Simulate payment).
+  // A double click must not reach the button that replaces the one under the pointer (Continue to checkout, then Done).
   el.addEventListener('click', (e) => { if (e.detail > 1) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
 }
 function closeDialog(silent) {
@@ -1329,8 +1329,7 @@ function finishSignIn(account) {
   closeDialog(true); S.intent=null; applyAccount(account);
   if (SCENE_EVENTS.some(([event]) => event === intent)) focusEvent(intent);
   if (intent && !pro()) openUpgrade(intent);
-  else if (intent === 'video') { S.format='video';renderExport(); }
-  else if (Object.hasOwn(EVENTS,intent)) startEvent(intent);
+  else if (intent && intent !== 'top' && pro()) continueProIntent(intent);
   else toast('Signed in as ' + S.email);
 }
 function billingPrice({ amount, currency, key }) {
@@ -1348,42 +1347,16 @@ function billingPrice({ amount, currency, key }) {
   const term = { monthly: '/ month', yearly: '/ year' }[key] ?? 'for 1 year';
   return [price, term];
 }
-const BILLING_RENEWAL = { monthly: 'Monthly plan, renews until you cancel.', yearly: 'Yearly plan, renews until you cancel.' };
-const CHECKOUT_NOTE = { paddle: 'Secure checkout by Paddle' };
+const BILLING_RENEWS = { monthly: 'Renews monthly.', yearly: 'Renews yearly.' };
+const CHECKOUT_NOTE = { paddle: 'Secure Paddle checkout.' };
 
-const BILLING_PRICE = '<div class="up-price"><p class="price"><strong></strong> <span></span></p><p class="renewal"></p></div>';
+const BILLING_PRICE = '<div class="up-price"><p class="price"><strong></strong> <span></span></p></div>';
 function showBillingPrice(group, offer) {
   const [amount, term] = billingPrice(offer);
   if (!amount) return;
   group.querySelector('strong').textContent = amount;
   group.querySelector('.price span').textContent = term;
-  const renewal = group.querySelector('.renewal');
-  renewal.textContent = BILLING_RENEWAL[offer.key] ?? '';
-  renewal.hidden = !renewal.textContent;
   group.dataset.ready = '';
-}
-
-function openCheckoutPreview(intent, offer) {
-  const el = h(`<div class="scrim"><div class="dlg upgrade checkout-demo" role="dialog" aria-modal="true" aria-labelledby="checkout-demo-title" aria-describedby="checkout-demo-note" tabindex="-1">
-    <button type="button" class="dlg-close" data-close aria-label="Close">${CLOSE}</button>
-    <div class="up-head"><h2 id="checkout-demo-title">Demo checkout</h2>
-      <p class="lead" id="checkout-demo-note">No payment is taken. The live workbench opens Paddle at this step.</p></div>
-    <div class="co-summary"><span>DriveScene Studio Pro</span>${BILLING_PRICE}</div>
-    <div class="actions">
-      <button type="button" class="d-btn lg" data-back>Back</button>
-      <button type="button" class="d-btn primary lg" data-complete>Simulate payment</button>
-    </div>
-  </div></div>`);
-  showBillingPrice(el.querySelector('.up-price'), offer);
-  el.querySelector('[data-close]').onclick = () => closeDialog();
-  el.querySelector('[data-back]').onclick = () => openUpgrade(intent);
-  el.querySelector('[data-complete]').onclick = event => {
-    if (event.currentTarget.disabled) return;
-    event.currentTarget.disabled = true;
-    setPreviewPlan('pro');
-    showProActive(el, intent);
-  };
-  openDialog(el);
 }
 
 function showProActive(el, intent) {
@@ -1393,9 +1366,9 @@ function showProActive(el, intent) {
   box.setAttribute('aria-describedby', 'pro-active-note');
   box.replaceChildren(h(`<button type="button" class="dlg-close" data-close aria-label="Close">${CLOSE}</button>`),
     h(`<div class="up-head"><h2 id="pro-active-title">Pro is active</h2>
-      <p class="lead" id="pro-active-note">Demo payment complete. No charge was made.</p></div>`),
-    h(`<ul class="benefits">${PRO_BENEFITS.map(benefit => `<li>${CHECK}${benefit}</li>`).join('')}</ul>`),
+      <p class="lead" id="pro-active-note">Preview only. No charge was made.</p></div>`),
     h('<button type="button" class="d-btn primary lg block" data-done>Done</button>'));
+  box.querySelector('.up-head').before(h(`<span class="pro-mark" aria-hidden="true">${CHECK}</span>`));
   box.querySelector('[data-close]').onclick = () => closeDialog();
   box.querySelector('[data-done]').onclick = () => { closeDialog(); continueProIntent(intent); };
   box.querySelector('[data-done]').focus({ preventScroll: true });
@@ -1404,6 +1377,7 @@ function showProActive(el, intent) {
 function continueProIntent(intent) {
   if (!pro()) return;
   if (intent === 'video') { S.format = 'video'; renderExport(); }
+  else if (intent === 'export') $('export').click();
   else if (Object.hasOwn(EVENTS, intent)) { focusEvent(intent); startEvent(intent); }
 }
 
@@ -1469,7 +1443,7 @@ async function openUpgrade(intent) {
   const paymentNames = { card: 'Card', paddle: 'Card or PayPal', wechat_pay: 'WeChat Pay', alipay: 'Alipay', hosted: 'Hosted checkout' };
   const note = el.querySelector('#checkout-note');
   const showNote = method => {
-    note.querySelector('span').textContent = CHECKOUT_NOTE[method] ?? 'Secure hosted checkout';
+    note.querySelector('span').textContent = [BILLING_RENEWS[S.billing], hasBilling ? (CHECKOUT_NOTE[method] ?? 'Secure hosted checkout.') : 'Preview only. No charge.'].filter(Boolean).join(' ');
     note.hidden = false;
   };
   try {
@@ -1506,7 +1480,8 @@ async function openUpgrade(intent) {
     el.querySelector('form').onsubmit = async e => {
       e.preventDefault();
       if (button.disabled) return;
-      if (!hasBilling) return openCheckoutPreview(intent, current);
+      // The static preview has no billing server: it simulates the payment and shows the result.
+      if (!hasBilling) { setPreviewPlan('pro'); return showProActive(el, intent); }
       setCheckoutBusy(button, true);
       setFormError(el, 'billing-error', '');
       try {
@@ -1696,8 +1671,10 @@ themeButton.addEventListener('click', async () => {
   const animate = Boolean(document.startViewTransition) && !reducedMotion();
   requestedTheme = target;
   try { localStorage.setItem('sr-ui-draft-theme', target); } catch {}
+  let preparedBridge;
   const applyShell = () => {
     if (request !== themeRequest) return;
+    preparedBridge?.startThemeBlend?.();
     root.dataset.theme = target;
     renderThemeLabel();
   };
@@ -1708,15 +1685,17 @@ themeButton.addEventListener('click', async () => {
   };
   themeTransition?.skipTransition();
   const sceneTheme = preview.apply(bridge => {
-    if (request === themeRequest) return bridge.theme(target, {animate});
+    if (request !== themeRequest) return;
+    preparedBridge = bridge;
+    return bridge.theme(target, {animate, deferBlend: animate});
   }, {acrossScenes: true});
   if (!animate) {
     applyShell();
     refreshParked();
     return;
   }
-  // Let the live scene start its blend before capturing the shell, as in the
-  // published workbench. Async scene work stays outside the snapshot callback.
+  // Prepare the live scene while it keeps moving. Start its color clock when
+  // the shell changes, without waiting for WebGL in the transition callback.
   await sceneTheme;
   if (request !== themeRequest) return;
   const b = themeButton.getBoundingClientRect(), x = b.left + b.width / 2, y = b.top + b.height / 2;

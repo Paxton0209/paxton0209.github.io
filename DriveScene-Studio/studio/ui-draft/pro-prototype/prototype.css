@@ -189,7 +189,7 @@ html:root #inspector-scroll>:is(#interaction-settings,#shared-settings,section:h
 .tl-play:focus-visible,.tb-btn:focus-visible,.avatar:focus-visible,.check-row:focus-visible,.format-options button:focus-visible,.dlg button:focus-visible{outline:2px solid var(--ds-color-text-1);outline-offset:2px} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
 
 /* Dialogs */
-.scrim{position:fixed;inset:0;z-index:var(--ds-z-dialog);background:var(--ds-color-scrim);display:grid;place-items:center;padding:16px;animation:proto-fade var(--ds-motion-menu) var(--ds-motion-ease)} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+.scrim{position:fixed;inset:0;z-index:var(--ds-z-dialog);background:var(--ds-color-scrim);display:grid;place-items:safe center;overflow:auto;overscroll-behavior:contain;padding:var(--ds-space-6);animation:proto-fade var(--ds-motion-menu) var(--ds-motion-ease)} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
 @keyframes proto-fade{from{opacity:0}to{opacity:1}}
 .dlg{width:min(480px,100vw - 32px);box-sizing:border-box;padding:var(--ds-space-8);border-radius:var(--ds-radius-stage);background:var(--ds-color-raised);box-shadow:var(--ds-shadow-dialog);display:flex;flex-direction:column;gap:var(--ds-space-7);animation:proto-menu var(--ds-motion-menu) var(--ds-motion-ease)} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
 :root[data-theme=dark] .dlg{background:var(--ds-color-face);box-shadow:0 0 0 1px var(--ds-color-line-strong),var(--ds-shadow-dialog)}
@@ -227,8 +227,12 @@ html:root #inspector-scroll>:is(#interaction-settings,#shared-settings,section:h
 
 /* Auth dialog */
 .dlg.auth{width:min(400px,100vw - 32px);padding:32px;gap:var(--ds-space-7);position:relative} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
-.dlg-close{position:absolute;top:12px;right:12px;width:28px;height:28px;border:0;border-radius:var(--ds-radius-control);background:transparent;color:var(--ds-color-text-2);display:grid;place-items:center;padding:0} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
-@media (hover:hover) and (pointer:fine){.dlg-close:hover{background:var(--ds-color-track);color:var(--ds-color-text-1)}}
+.dlg-close{position:absolute;top:calc(var(--ds-space-10) - (var(--ds-size-touch) - 26px) / 2);right:calc(var(--ds-space-10) - var(--ds-space-3));width:var(--ds-size-touch);height:var(--ds-size-touch);border:0;border-radius:var(--ds-radius-pill);background:transparent;color:var(--ds-color-text-1);display:grid;place-items:center;padding:0;z-index:1}
+.dlg-close::before{content:"";position:absolute;inset:var(--ds-space-3);border-radius:inherit;background:var(--ds-color-track)} /* 44 target, 32 visible disc: centred on the 26 px title line, right edge on the content edge */ /* ds-allow: 26px is the text-heading line height */
+.dlg-close svg{position:relative;width:var(--ds-size-icon);height:var(--ds-size-icon)}
+.dlg.auth .dlg-close{top:calc(var(--ds-space-10) + var(--ds-space-2) - (var(--ds-size-touch) - 26px) / 2)} /* ds-allow: the sign-in title sits 4 px lower */
+.dlg.pro-active .dlg-close{top:calc(var(--ds-space-10) + (var(--ds-space-11) - var(--ds-size-touch)) / 2)}
+@media (hover:hover) and (pointer:fine){.dlg-close:hover{opacity:var(--ds-motion-hover-opacity)}}
 .auth-head{display:flex;flex-direction:column;align-items:center;text-align:center;gap:var(--ds-space-2);padding:var(--ds-space-2) 0 var(--ds-space-2)}
 .auth-head .unused{width:44px;height:44px;border-radius:11px;margin-bottom:var(--ds-space-5);box-shadow:0 0 0 1px var(--ds-color-line-control)} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
 .auth-head h2{text-align:center}
@@ -244,21 +248,18 @@ html:root #inspector-scroll>:is(#interaction-settings,#shared-settings,section:h
 .dlg.upgrade{width:min(400px,100vw - 32px);padding:var(--ds-space-10);gap:var(--ds-space-8);position:relative;box-shadow:0 0 0 1px rgba(0,0,0,.06),0 2px 6px rgba(0,0,0,.04),var(--ds-shadow-dialog)} /* ds-allow: retain the existing upgrade dialog dimensions and depth treatment */
 .dlg.upgrade::before{content:"";position:absolute;inset:0 0 auto 0;height:160px;border-radius:inherit;background:linear-gradient(180deg,rgba(242,213,143,.26) 0%,rgba(242,213,143,.09) 45%,rgba(255,255,255,0) 100%);pointer-events:none} /* ds-allow: retain the user-approved Pro gold gradient */
 :root[data-theme=dark] .dlg.upgrade::before{content:none} /* Dark mode: the gold wash muddied the surface (author review 2026-11-19); the gold checks carry Pro */
-.dlg.upgrade>*{position:relative}
-.dlg.upgrade .dlg-close{position:absolute;inset-block-start:var(--ds-space-4);inset-inline-end:var(--ds-space-4);width:var(--ds-size-touch);height:var(--ds-size-touch)}
-.dlg.upgrade .dlg-close svg{width:var(--ds-size-icon);height:var(--ds-size-icon)}
-/* Group rhythm: title → price 8, price → renewal 2, group → group 24 (dialog gap), benefit → benefit 8, button → note 12. */
-.up-head{display:flex;flex-direction:column;gap:var(--ds-space-4);padding-inline-end:var(--ds-space-10)}
+.dlg.upgrade>:not(.dlg-close){position:relative}
+/* One left edge for every group. Group rhythm: title → price 8, group → group 24 (dialog gap), benefit → benefit 12, button → note 12. */
+.up-head{display:flex;flex-direction:column;gap:var(--ds-space-4);padding-inline-end:var(--ds-space-11)}
 .up-head .lead{margin:0}
 .up-price{display:flex;flex-direction:column;gap:var(--ds-space-1)}
 .up-price:not([data-ready]){visibility:hidden}
 .up-price[hidden]{display:none}
 .up-price .price{display:flex;align-items:baseline;flex-wrap:wrap;gap:0 var(--ds-space-3);margin:0;font:var(--ds-text-meta);color:var(--ds-color-text-2)}
 .up-price .price strong{min-block-size:1lh;font:var(--ds-text-display);font-variant-numeric:tabular-nums;color:var(--ds-color-text-1)}
-.up-price .renewal{margin:0;font:var(--ds-text-meta);color:var(--ds-color-text-2)}
-.checkout-note:not([hidden]){display:flex;align-items:center;justify-content:center;gap:var(--ds-space-3);margin:0;font:var(--ds-text-meta);color:var(--ds-color-text-2)}
+.checkout-note:not([hidden]){display:flex;align-items:center;gap:var(--ds-space-3);margin:0;font:var(--ds-text-meta);color:var(--ds-color-text-2)}
 .checkout-note svg{flex:none;width:var(--ds-size-icon);height:var(--ds-size-icon)}
-.benefits{display:grid;gap:var(--ds-space-4);margin:0;padding:0;list-style:none}
+.benefits{display:grid;gap:var(--ds-space-5);margin:0;padding:0;list-style:none}
 .benefits li{display:flex;align-items:center;gap:var(--ds-space-4);font:var(--ds-text-meta);color:var(--ds-color-text-1)}
 .benefits svg{flex:none;width:var(--ds-size-icon);height:var(--ds-size-icon);padding:var(--ds-space-1);box-sizing:border-box;border-radius:50%;color:#7A5000;background:linear-gradient(160deg,#FBEDC4,#EFCF83);box-shadow:inset 0 0 0 .5px rgba(150,100,10,.30)} /* ds-allow: retain the existing Pro benefit check */
 :root[data-theme=dark] .benefits svg{color:#F2CF7E;background:rgba(242,207,126,.16)} /* ds-allow: retain the existing Pro benefit check */
@@ -273,15 +274,11 @@ html:root #inspector-scroll>:is(#interaction-settings,#shared-settings,section:h
 .upgrade #checkout{height:auto;min-height:var(--ds-size-touch);padding:var(--ds-space-2);text-align:center}
 .upgrade #checkout[aria-busy=true]{background:var(--ds-color-track);color:var(--ds-color-text-3);box-shadow:none}
 .up-action{display:grid;gap:var(--ds-space-5)}
-/* Demo checkout (static prototype only) and the simulated Pro activation. */
-.co-summary{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:baseline;gap:var(--ds-space-2) var(--ds-space-6);padding:var(--ds-space-6);border-radius:var(--ds-radius-control);background:var(--ds-color-track)}
-.co-summary>span{font:var(--ds-text-meta);color:var(--ds-color-text-1)}
-.co-summary .up-price{display:contents}
-.co-summary .up-price .price{color:var(--ds-color-text-1)}
-.co-summary .up-price .price strong{min-block-size:0;font:var(--ds-text-meta)}
-.co-summary .up-price .renewal{grid-column:1/-1}
-.checkout-demo .actions .d-btn{flex:1 1 0}
+/* Simulated Pro activation (static prototype only). */
 .dlg.pro-active .d-btn.block{min-height:var(--ds-size-touch)}
+.pro-mark{width:var(--ds-space-11);height:var(--ds-space-11);border-radius:50%;display:grid;place-items:center;color:#7A5000;background:linear-gradient(160deg,#FBEDC4,#EFCF83);box-shadow:inset 0 0 0 .5px rgba(150,100,10,.30)} /* ds-allow: the Pro benefit check at 48 px */
+:root[data-theme=dark] .pro-mark{color:#F2CF7E;background:rgba(242,207,126,.16)} /* ds-allow: the Pro benefit check at 48 px */
+.pro-mark svg{width:var(--ds-space-8);height:var(--ds-space-8)}
 
 /* Prototype control bar: outside the product UI */
 .proto-bar{position:fixed;top:0;left:0;right:0;height:36px;z-index:45;display:flex;align-items:center;justify-content:center;gap:12px;background:#1D1D1F;color:#C8C8CC;font:var(--ds-text-ui-caption)} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
@@ -297,6 +294,12 @@ html:root #inspector-scroll>:is(#interaction-settings,#shared-settings,section:h
 }
 html body{padding-top:36px;box-sizing:border-box} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
 html body #app{height:calc(100dvh - 36px)!important;min-height:0} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
+
+@media(max-width:479px) and (max-height:400px){ /* ds-allow: Below the two-column phone breakpoint, keep the settings reachable with a short viewport. */
+ :root .workspace{overflow-y:auto;grid-template-rows:var(--ds-size-touch) minmax(var(--ds-space-14),42dvh) max-content!important}
+ :root #inspector{display:block}
+ :root #inspector-scroll{overflow:visible;mask-image:none}
+}
 
 /* Spacing model change (author review 2026-11-08): item-to-item 32 -> 36, label column 56 -> 64 (SPEC .ds-prop) */
 html #inspector .property{height:36px;min-height:36px} /* ds-allow: author-approved Pro prototype value 2026-11-08; proposed design-system addition, see README */
